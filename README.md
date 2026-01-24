@@ -339,5 +339,3 @@ This project is licensed under the MIT License.
 
 For issues or questions, please open an issue on GitHub.
 
-#   H a c k a t h o n - A H  
- 

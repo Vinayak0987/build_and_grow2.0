@@ -53,6 +53,6 @@ def create_app(config_class=Config):
     # Health check endpoint
     @app.route('/api/health')
     def health_check():
-        return {'status': 'healthy', 'service': 'InferX-ML API'}
+        return {'status': 'healthy', 'service': 'InventraAI API'}
     
     return app

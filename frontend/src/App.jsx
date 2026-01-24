@@ -13,6 +13,7 @@ import DemandForecast from './pages/DemandForecast'
 import DailyItems from './pages/DailyItems'
 import SalesInput from './pages/SalesInput'
 import Login from './pages/Login'
+import MLPipeline from './pages/MLPipeline'
 import AnimatedGridBackground from './components/AnimatedGridBackground'
 import { useAuthStore } from './store/authStore'
 
@@ -54,6 +55,7 @@ function App() {
                                 <Layout>
                                     <Routes>
                                         <Route path="/dashboard" element={<Dashboard />} />
+                                        <Route path="/ml-pipeline" element={<MLPipeline />} />
                                         <Route path="/datasets" element={<Datasets />} />
                                         <Route path="/training" element={<Training />} />
                                         <Route path="/models" element={<Models />} />
