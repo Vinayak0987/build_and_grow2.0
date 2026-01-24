@@ -1,0 +1,564 @@
+/* Inventory Page Styles */
+.inventory-page {
+    padding: 0;
+    /* Let main-content handle padding */
+    min-height: 100vh;
+    background: transparent;
+    /* Allow global animated background */
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.inventory-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.inventory-header p {
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.refresh-btn.spinning svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Agent Cards Grid */
+.agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.agent-card {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.agent-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.agent-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.agent-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.agent-icon.stock {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.agent-icon.expiry {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.agent-icon.order {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.agent-icon.trends {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.agent-icon.vendor {
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+}
+
+.agent-title h3 {
+    color: #f1f5f9;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.agent-title p {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.agent-content {
+    min-height: 200px;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.stat-value.critical {
+    color: #ef4444;
+}
+
+.stat-value.warning {
+    color: #f59e0b;
+}
+
+.stat-value.success {
+    color: #22c55e;
+}
+
+.stat-value.info {
+    color: #3b82f6;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* Health Score */
+.health-score {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 12px;
+}
+
+.health-score .score {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.health-score .score.good {
+    color: #22c55e;
+}
+
+.health-score .score.medium {
+    color: #f59e0b;
+}
+
+.health-score .score.bad {
+    color: #ef4444;
+}
+
+.health-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.health-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.health-bar-fill.good {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.health-bar-fill.medium {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.health-bar-fill.bad {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* Item Lists */
+.item-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.item-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.item-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.item-row .name {
+    color: #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.item-row .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge.critical {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.badge.success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.badge.info {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+/* AI Insights */
+.ai-insights {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+}
+
+.ai-insights-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #a78bfa;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.ai-insights p {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Selling Tips */
+.selling-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tip-card {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 1rem;
+    border-radius: 12px;
+    border-left: 3px solid #f59e0b;
+}
+
+.tip-card .product {
+    color: #f1f5f9;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.tip-card .discount {
+    display: inline-block;
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.tip-card .message {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+/* Order Suggestions */
+.order-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.order-summary .stat-item {
+    text-align: center;
+}
+
+.suggested-items {
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.order-item .details {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-item .name {
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.order-item .qty {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.urgency-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.urgency-badge.critical {
+    background: #ef4444;
+    color: white;
+}
+
+.urgency-badge.high {
+    background: #f59e0b;
+    color: white;
+}
+
+.urgency-badge.normal {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Events */
+.events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.event-card {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.event-name {
+    color: #f1f5f9;
+    font-weight: 600;
+}
+
+.event-impact {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.event-impact.high,
+.event-impact.very_high {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.event-impact.medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.event-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.event-categories span {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+/* Loading State */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #64748b;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.empty-state svg {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Create Order Button */
+.create-order-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.create-order-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+/* Full Width Card */
+.agent-card.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .inventory-page {
+        padding: 1rem;
+    }
+
+    .agent-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inventory-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .order-summary {
+        grid-template-columns: 1fr;
+    }
+}
