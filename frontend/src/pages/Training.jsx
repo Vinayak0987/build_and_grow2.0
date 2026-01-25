@@ -33,12 +33,19 @@ export default function Training() {
     const [isAnalyzing, setIsAnalyzing] = useState(false)
     const [analysisError, setAnalysisError] = useState(null)
 
-    const { data: datasetsData } = useQuery({
+    const { data: datasetsData, error: datasetsError, isLoading: datasetsLoading } = useQuery({
         queryKey: ['datasets'],
         queryFn: () => datasetsApi.list()
     })
 
+    // Debug logging - check browser console
+    console.log('[Training] datasetsData:', datasetsData)
+    console.log('[Training] datasetsError:', datasetsError)
+    console.log('[Training] datasetsLoading:', datasetsLoading)
+
     const datasets = datasetsData?.data?.datasets || []
+    console.log('[Training] datasets array:', datasets)
+
     const selectedDatasetInfo = datasets.find(d => d.id.toString() === selectedDataset)
 
     const { data: profileData } = useQuery({

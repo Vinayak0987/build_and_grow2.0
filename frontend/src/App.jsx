@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Datasets from './pages/Datasets'
 import Training from './pages/Training'
 import Models from './pages/Models'
+import ModelDashboard from './pages/ModelDashboard'
 import Predictions from './pages/Predictions'
 import Reasoning from './pages/Reasoning'
 import Inventory from './pages/Inventory'
@@ -64,6 +65,8 @@ function App() {
                                         <Route path="/datasets" element={<Datasets />} />
                                         <Route path="/training" element={<Training />} />
                                         <Route path="/models" element={<Models />} />
+                                        <Route path="/models/:modelId" element={<ModelDashboard />} />
+                                        <Route path="/models/:modelId/:tab" element={<ModelDashboard />} />
                                         <Route path="/predictions/:modelId?" element={<Predictions />} />
                                         <Route path="/reasoning" element={<Reasoning />} />
                                         <Route path="/inventory" element={<Inventory />} />
