@@ -79,6 +79,9 @@ def import_from_dataset(dataset_id):
         imported = 0
         errors = []
         
+        min_date = None
+        max_date = None
+        
         for i, row in df.iterrows():
             try:
                 product_name = row.get(product_col)
@@ -119,6 +122,12 @@ def import_from_dataset(dataset_id):
                     elif hasattr(date_val, 'date'):
                         sale_date = date_val.date()
                 
+                # Update date range
+                if min_date is None or sale_date < min_date:
+                    min_date = sale_date
+                if max_date is None or sale_date > max_date:
+                    max_date = sale_date
+
                 sale = SalesRecord(
                     user_id=user_id,
                     product_name=str(product_name).strip(),
@@ -150,6 +159,10 @@ def import_from_dataset(dataset_id):
                 'sale_date': date_col,
                 'category': category_col,
                 'total_amount': total_col
+            },
+            'date_range': {
+                'min': min_date.isoformat() if min_date else None,
+                'max': max_date.isoformat() if max_date else None
             }
         }), 201
         
@@ -261,6 +274,9 @@ def _import_csv_sales(file, user_id):
         imported = 0
         errors = []
         
+        min_date = None
+        max_date = None
+        
         for i, row in enumerate(reader):
             try:
                 # Flexible column mapping
@@ -284,6 +300,12 @@ def _import_csv_sales(file, user_id):
                         except:
                             continue
                 
+                # Update date range
+                if min_date is None or sale_date < min_date:
+                    min_date = sale_date
+                if max_date is None or sale_date > max_date:
+                    max_date = sale_date
+
                 sale = SalesRecord(
                     user_id=user_id,
                     product_name=product_name,
@@ -304,7 +326,11 @@ def _import_csv_sales(file, user_id):
         return jsonify({
             'message': f'CSV imported: {imported} records',
             'imported': imported,
-            'errors': errors[:10]
+            'errors': errors[:10],
+            'date_range': {
+                'min': min_date.isoformat() if min_date else None,
+                'max': max_date.isoformat() if max_date else None
+            }
         }), 201
         
     except Exception as e:

@@ -4,21 +4,27 @@ import { useInventoryStore } from '../store/inventoryStore'
 
 export default function Reasoning() {
     const { token } = useAuthStore()
-    const { setAllAnalysis } = useInventoryStore()
-    const [models, setModels] = useState([])
-    const [datasets, setDatasets] = useState([])
-    const [selectedModel, setSelectedModel] = useState(null)
-    const [selectedDataset, setSelectedDataset] = useState(null)
-    const [loading, setLoading] = useState(false)
-    const [activeTab, setActiveTab] = useState('overview')
+    const {
+        reasoningState,
+        setReasoningState,
+        setAllAnalysis,
+        stockAnalysis,
+        expiryAnalysis,
+        orderSuggestions,
+        trendsAnalysis,
+        fullReport
+    } = useInventoryStore()
 
-    // Agent reports
-    const [stockAnalysis, setStockAnalysis] = useState(null)
-    const [expiryAnalysis, setExpiryAnalysis] = useState(null)
-    const [orderSuggestions, setOrderSuggestions] = useState(null)
-    const [trendsAnalysis, setTrendsAnalysis] = useState(null)
-    const [fullReport, setFullReport] = useState(null)
-    const [dataAnalysis, setDataAnalysis] = useState(null)
+    const { models, datasets, selectedModel, selectedDataset, activeTab } = reasoningState
+
+    // Setters wrapper
+    const setModels = (data) => setReasoningState({ models: data })
+    const setDatasets = (data) => setReasoningState({ datasets: data })
+    const setSelectedModel = (data) => setReasoningState({ selectedModel: data })
+    const setSelectedDataset = (data) => setReasoningState({ selectedDataset: data })
+    const setActiveTab = (data) => setReasoningState({ activeTab: data })
+
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         fetchModels()
@@ -60,11 +66,9 @@ export default function Reasoning() {
         }
 
         setLoading(true)
-        setFullReport(null)
-        setStockAnalysis(null)
-        setExpiryAnalysis(null)
-        setOrderSuggestions(null)
-        setTrendsAnalysis(null)
+        setLoading(true)
+        // Clear previous analysis
+        setAllAnalysis({ stock: null, expiry: null, orders: null, trends: null, report: null })
 
         try {
             // Run all agent analyses using the new dataset-based endpoints
@@ -106,10 +110,8 @@ export default function Reasoning() {
                 trendRes.json()
             ])
 
-            setStockAnalysis(stock)
-            setExpiryAnalysis(expiry)
-            setOrderSuggestions(orders)
-            setTrendsAnalysis(trends)
+            // Store intermediate results if needed, or just wait for full set
+            // For now we set them to local variables 'stock', 'expiry' etc are already defined
 
             // Generate comprehensive AI report
             const reportRes = await fetch(`/api/reasoning/full-report/${selectedDataset.id}`, {
@@ -130,11 +132,9 @@ export default function Reasoning() {
             let reportData = null
             if (reportRes.ok) {
                 reportData = await reportRes.json()
-                setFullReport(reportData)
             }
 
             // Save all analysis data to the shared inventory store
-            // This makes it available to the Inventory page
             setAllAnalysis({
                 stock,
                 expiry,

@@ -28,30 +28,52 @@ const formatCurrency = (amount) => {
     }).format(amount)
 }
 
+import { useInventoryStore } from '../store/inventoryStore'
+
 export default function SalesInput() {
-    const [dailySales, setDailySales] = useState(null)
-    const [salesHistory, setSalesHistory] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const { salesState, setSalesState } = useInventoryStore()
+    const {
+        dailySales,
+        salesHistory,
+        datasets,
+        activeTab,
+        categoryFilter,
+        selectedDate: storedSelectedDate,
+        formData
+    } = salesState
+
+    // Setters
+    const setDailySales = (d) => setSalesState({ dailySales: d })
+    const setSalesHistory = (d) => setSalesState({ salesHistory: d })
+    // If datasets logic is complex (filtering), handle it in loadDatasets
+    const setDatasets = (d) => setSalesState({ datasets: d })
+    const setActiveTab = (t) => setSalesState({ activeTab: t })
+    const setCategoryFilter = (c) => setSalesState({ categoryFilter: c })
+    const setSelectedDate = (d) => setSalesState({ selectedDate: d })
+    const setFormData = (d) => setSalesState({ formData: d })
+
+    // Initialize selectedDate if null
+    const selectedDate = storedSelectedDate || new Date().toISOString().split('T')[0]
+    useEffect(() => {
+        if (!storedSelectedDate) {
+            setSelectedDate(selectedDate)
+        }
+    }, [])
+
+    const [loading, setLoading] = useState(!dailySales) // If data exists, not loading
     const [submitting, setSubmitting] = useState(false)
     const [refreshing, setRefreshing] = useState(false)
     const [error, setError] = useState(null)
-    const [activeTab, setActiveTab] = useState('today')
-    const [categoryFilter, setCategoryFilter] = useState('')
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+    // removed local activeTab, categoryFilter, selectedDate, formData
     const [toast, setToast] = useState(null)
 
-    // Dataset selection states
-    const [datasets, setDatasets] = useState([])
+    // Dataset selection states (keep UI state local if transient, or move to store if needed)
+    // User asked for "page reload state", usually form data and main content.
+    // Dropdown open/close state (showDatasetSelector) is fine as local.
+    // import selection (selectedDataset) is likely transient? I'll keep it local for now unless asked.
     const [selectedDataset, setSelectedDataset] = useState('')
     const [importingDataset, setImportingDataset] = useState(false)
     const [showDatasetSelector, setShowDatasetSelector] = useState(false)
-
-    const [formData, setFormData] = useState({
-        product_name: '',
-        category: '',
-        quantity_sold: 1,
-        unit_price: 0
-    })
 
     const fileInputRef = useRef(null)
 
@@ -101,12 +123,18 @@ export default function SalesInput() {
     // Initial load
     useEffect(() => {
         const initLoad = async () => {
-            setLoading(true)
-            await Promise.all([loadDailySales(), loadHistory(), loadDatasets()])
-            setLoading(false)
+            // Only load if we don't have data
+            if (!dailySales || !salesHistory) {
+                setLoading(true)
+                await Promise.all([loadDailySales(), loadHistory(), loadDatasets()])
+                setLoading(false)
+            } else if (datasets.length === 0) {
+                // Load datasets if missing
+                loadDatasets()
+            }
         }
         initLoad()
-    }, [loadDailySales, loadHistory, loadDatasets])
+    }, []) // Run once on mount, but conditional logic prevents re-fetch
 
     // Handle date change
     const handleDateChange = async (e) => {
@@ -167,9 +195,19 @@ export default function SalesInput() {
             const result = await salesApi.importFromDataset(selectedDataset)
             const data = result.data
             showToast(`Imported ${data.imported} records from dataset!`)
+
+            // If we have date range, switch to the latest date to show data
+            if (data.date_range?.max) {
+                const maxDate = data.date_range.max
+                setSelectedDate(maxDate)
+                await loadDailySales(maxDate)
+                showToast(`Showing data for ${maxDate}`)
+            } else {
+                await loadDailySales()
+            }
+
             setSelectedDataset('')
             setShowDatasetSelector(false)
-            await loadDailySales()
             await loadHistory()
         } catch (err) {
             console.error('Import failed:', err)
@@ -195,8 +233,18 @@ export default function SalesInput() {
 
         try {
             const result = await salesApi.uploadCsv(uploadData)
-            showToast(`Successfully imported ${result.data.imported} sales records!`)
-            await loadDailySales()
+            const data = result.data
+            showToast(`Successfully imported ${data.imported} sales records!`)
+
+            if (data.date_range?.max) {
+                const maxDate = data.date_range.max
+                setSelectedDate(maxDate)
+                await loadDailySales(maxDate)
+                showToast(`Showing data for ${maxDate}`)
+            } else {
+                await loadDailySales()
+            }
+
             await loadHistory()
         } catch (err) {
             console.error('Upload failed:', err)
@@ -229,7 +277,7 @@ export default function SalesInput() {
         : 0
 
     // Loading state
-    if (loading) {
+    if (loading && !dailySales) {
         return (
             <div className="sales-page">
                 <div className="loading-container">

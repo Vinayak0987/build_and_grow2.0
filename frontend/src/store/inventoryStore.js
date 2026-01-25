@@ -4,7 +4,9 @@ import { persist } from 'zustand/middleware'
 export const useInventoryStore = create(
     persist(
         (set, get) => ({
-            // Order suggestions/action items from AI Reasoning
+            // ==========================================
+            // EXISTING SHARED ANALYSIS STATE
+            // ==========================================
             orderSuggestions: null,
             stockAnalysis: null,
             expiryAnalysis: null,
@@ -50,7 +52,58 @@ export const useInventoryStore = create(
             hasData: () => {
                 const state = get()
                 return state.orderSuggestions !== null
-            }
+            },
+
+            // ==========================================
+            // REASONING PAGE STATE
+            // ==========================================
+            reasoningState: {
+                models: [],
+                datasets: [],
+                selectedModel: null,
+                selectedDataset: null,
+                activeTab: 'overview'
+            },
+            setReasoningState: (updates) => set((state) => ({
+                reasoningState: { ...state.reasoningState, ...updates }
+            })),
+
+            // ==========================================
+            // INVENTORY PAGE STATE
+            // ==========================================
+            inventoryState: {
+                vendors: [],
+                selectedVendorIds: [],
+                showAddVendor: false,
+                purchaseOrder: null,
+                trackingStep: null,
+                finalVendor: null,
+                isInitialized: false
+            },
+            setInventoryState: (updates) => set((state) => ({
+                inventoryState: { ...state.inventoryState, ...updates }
+            })),
+
+            // ==========================================
+            // SALES PAGE STATE
+            // ==========================================
+            salesState: {
+                dailySales: null,
+                salesHistory: null,
+                datasets: [],
+                activeTab: 'today',
+                categoryFilter: '',
+                selectedDate: null,
+                formData: {
+                    product_name: '',
+                    category: '',
+                    quantity_sold: 1,
+                    unit_price: 0
+                }
+            },
+            setSalesState: (updates) => set((state) => ({
+                salesState: { ...state.salesState, ...updates }
+            })),
         }),
         {
             name: 'inferx-inventory',
@@ -60,7 +113,10 @@ export const useInventoryStore = create(
                 expiryAnalysis: state.expiryAnalysis,
                 trendsAnalysis: state.trendsAnalysis,
                 fullReport: state.fullReport,
-                lastUpdated: state.lastUpdated
+                lastUpdated: state.lastUpdated,
+                reasoningState: state.reasoningState,
+                inventoryState: state.inventoryState,
+                salesState: state.salesState
             })
         }
     )

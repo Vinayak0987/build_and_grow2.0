@@ -3,6 +3,8 @@ import { useInventoryStore } from '../store/inventoryStore'
 import { inventoryApi } from '../services/api'
 import './Inventory.css'
 
+import { VENDORS_LIST } from '../constants/vendors'
+
 // Fallback Demo Data (only used when no AI analysis has been run)
 const DEMO_DATA = {
     orders: {
@@ -14,12 +16,6 @@ const DEMO_DATA = {
     }
 }
 
-const DEMO_VENDORS = [
-    { id: 1, name: 'Metro Cash & Carry', contact: '+91 9876543210', email: 'metro@example.com', category: 'Wholesale', rating: 4.5 },
-    { id: 2, name: 'Reliance Fresh', contact: '+91 9876543211', email: 'reliance@example.com', category: 'Retail', rating: 4.2 },
-    { id: 3, name: 'DMart Distributor', contact: '+91 9876543212', email: 'dmart@example.com', category: 'Wholesale', rating: 4.8 },
-    { id: 4, name: 'BigBasket Supplier', contact: '+91 9876543213', email: 'bigbasket@example.com', category: 'Online', rating: 4.3 }
-]
 
 // Order tracking steps
 const TRACKING_STEPS = {
@@ -31,34 +27,68 @@ const TRACKING_STEPS = {
 
 export default function Inventory() {
     // Get order suggestions from the shared store (populated by AI Reasoning page)
-    const { orderSuggestions: storedOrderSuggestions, lastUpdated } = useInventoryStore()
+    const {
+        orderSuggestions,
+        setOrderSuggestions,
+        lastUpdated,
+        inventoryState,
+        setInventoryState
+    } = useInventoryStore()
 
-    const [orderSuggestions, setOrderSuggestions] = useState(null)
+    const {
+        vendors = [],
+        selectedVendorIds: selectedVendors = [],
+        showAddVendor = false,
+        purchaseOrder = null,
+        trackingStep = null,
+        finalVendor = null,
+        isInitialized = false
+    } = inventoryState || {}
+
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
-
-    // Vendor states - now supports multiple selection
-    const [vendors, setVendors] = useState(DEMO_VENDORS)
-    const [selectedVendors, setSelectedVendors] = useState([]) // Array of selected vendor IDs
-    const [showAddVendor, setShowAddVendor] = useState(false)
+    const [sendingEmails, setSendingEmails] = useState(false)
     const [newVendor, setNewVendor] = useState({ name: '', contact: '', email: '', category: 'Wholesale' })
 
-    // Purchase tracking states
-    const [purchaseOrder, setPurchaseOrder] = useState(null)
-    const [trackingStep, setTrackingStep] = useState(null)
-    const [finalVendor, setFinalVendor] = useState(null) // The vendor selected from dropdown
-    const [sendingEmails, setSendingEmails] = useState(false)
+    // Setters wrappers
+    const setVendors = (v) => setInventoryState({ vendors: v })
+    const setSelectedVendors = (v) => {
+        // Handle functional update if needed, but since we have global state, 
+        // passing function to setter might be tricky if we don't wrap it right.
+        // Simplified: calculate new value in handler.
+        setInventoryState({ selectedVendorIds: v })
+    }
+    const setShowAddVendor = (v) => setInventoryState({ showAddVendor: v })
+    const setPurchaseOrder = (v) => {
+        // Support functional update for Purchase Order if used
+        if (typeof v === 'function') {
+            setInventoryState({ purchaseOrder: v(purchaseOrder) })
+        } else {
+            setInventoryState({ purchaseOrder: v })
+        }
+    }
+    const setTrackingStep = (v) => setInventoryState({ trackingStep: v })
+    const setFinalVendor = (v) => setInventoryState({ finalVendor: v })
+
+    // Initialize vendors
+    useEffect(() => {
+        if (!isInitialized) {
+            setInventoryState({
+                vendors: VENDORS_LIST,
+                isInitialized: true
+            })
+        }
+    }, [isInitialized])
 
     useEffect(() => {
         loadOrderSuggestions()
-    }, [storedOrderSuggestions])
+    }, [orderSuggestions])
 
     const loadOrderSuggestions = async () => {
         setLoading(true)
 
-        // First, check if we have data from the AI Reasoning page
-        if (storedOrderSuggestions && storedOrderSuggestions.suggested_items?.length > 0) {
-            setOrderSuggestions(storedOrderSuggestions)
+        // First, check if we have data from the AI Reasoning page or persisted state
+        if (orderSuggestions && (orderSuggestions.suggested_items?.length > 0 || orderSuggestions.total_items)) {
             setLoading(false)
             return
         }
@@ -101,13 +131,12 @@ export default function Inventory() {
     }
 
     const handleToggleVendor = (vendorId) => {
-        setSelectedVendors(prev => {
-            if (prev.includes(vendorId)) {
-                return prev.filter(id => id !== vendorId)
-            } else {
-                return [...prev, vendorId]
-            }
-        })
+        const prev = selectedVendors
+        if (prev.includes(vendorId)) {
+            setSelectedVendors(prev.filter(id => id !== vendorId))
+        } else {
+            setSelectedVendors([...prev, vendorId])
+        }
     }
 
     const handleSelectAllVendors = () => {
@@ -163,12 +192,13 @@ export default function Inventory() {
         // Simulate sending order confirmation email
         await new Promise(resolve => setTimeout(resolve, 1500))
 
-        setPurchaseOrder(prev => ({
-            ...prev,
+        const updatedOrder = {
+            ...purchaseOrder,
             finalVendor: finalVendor,
             orderPlacedAt: new Date().toISOString(),
             estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-        }))
+        }
+        setPurchaseOrder(updatedOrder)
         setTrackingStep(TRACKING_STEPS.ORDER_PLACED)
 
         // Try to create order in backend
