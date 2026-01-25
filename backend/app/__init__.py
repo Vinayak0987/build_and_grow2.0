@@ -37,6 +37,8 @@ def create_app(config_class=Config):
     from .routes.sales_routes import sales_bp
     from .routes.forecast_routes import forecast_bp
     from .routes.daily_items_routes import daily_items_bp
+    from .routes.advanced import advanced_bp
+    from .routes.reasoning import reasoning_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(datasets_bp, url_prefix='/api/datasets')
@@ -48,6 +50,8 @@ def create_app(config_class=Config):
     app.register_blueprint(sales_bp, url_prefix='/api/sales')
     app.register_blueprint(forecast_bp, url_prefix='/api/forecast')
     app.register_blueprint(daily_items_bp, url_prefix='/api/daily-items')
+    app.register_blueprint(advanced_bp, url_prefix='/api')
+    app.register_blueprint(reasoning_bp, url_prefix='/api/reasoning')
 
     
     # Health check endpoint

@@ -1,141 +1,147 @@
 import { useState, useEffect, useRef } from 'react'
-import { salesApi, forecastApi } from '../services/api'
+import { salesApi, forecastApi, datasetsApi, modelsApi, predictionsApi } from '../services/api'
 import './DemandForecast.css'
 
-// Hardcoded Demo Data
-const DEMO_DATA = {
-    forecasts: [
-        {
-            product_name: 'Amul Milk 1L', total_predicted: 245, predictions: [
-                { day_name: 'Monday', predicted_quantity: 32, confidence_lower: 28, confidence_upper: 36 },
-                { day_name: 'Tuesday', predicted_quantity: 30, confidence_lower: 26, confidence_upper: 34 },
-                { day_name: 'Wednesday', predicted_quantity: 35, confidence_lower: 30, confidence_upper: 40 },
-                { day_name: 'Thursday', predicted_quantity: 33, confidence_lower: 29, confidence_upper: 37 },
-                { day_name: 'Friday', predicted_quantity: 38, confidence_lower: 33, confidence_upper: 43 },
-                { day_name: 'Saturday', predicted_quantity: 42, confidence_lower: 36, confidence_upper: 48 },
-                { day_name: 'Sunday', predicted_quantity: 35, confidence_lower: 30, confidence_upper: 40 }
-            ]
-        },
-        {
-            product_name: 'Britannia Brown Bread', total_predicted: 168, predictions: [
-                { day_name: 'Monday', predicted_quantity: 22, confidence_lower: 19, confidence_upper: 25 },
-                { day_name: 'Tuesday', predicted_quantity: 20, confidence_lower: 17, confidence_upper: 23 },
-                { day_name: 'Wednesday', predicted_quantity: 24, confidence_lower: 21, confidence_upper: 27 },
-                { day_name: 'Thursday', predicted_quantity: 23, confidence_lower: 20, confidence_upper: 26 },
-                { day_name: 'Friday', predicted_quantity: 26, confidence_lower: 22, confidence_upper: 30 },
-                { day_name: 'Saturday', predicted_quantity: 28, confidence_lower: 24, confidence_upper: 32 },
-                { day_name: 'Sunday', predicted_quantity: 25, confidence_lower: 21, confidence_upper: 29 }
-            ]
-        },
-        {
-            product_name: 'Coca Cola 750ml', total_predicted: 189, predictions: [
-                { day_name: 'Monday', predicted_quantity: 25, confidence_lower: 21, confidence_upper: 29 },
-                { day_name: 'Tuesday', predicted_quantity: 23, confidence_lower: 19, confidence_upper: 27 },
-                { day_name: 'Wednesday', predicted_quantity: 27, confidence_lower: 23, confidence_upper: 31 },
-                { day_name: 'Thursday', predicted_quantity: 26, confidence_lower: 22, confidence_upper: 30 },
-                { day_name: 'Friday', predicted_quantity: 30, confidence_lower: 25, confidence_upper: 35 },
-                { day_name: 'Saturday', predicted_quantity: 32, confidence_lower: 27, confidence_upper: 37 },
-                { day_name: 'Sunday', predicted_quantity: 26, confidence_lower: 22, confidence_upper: 30 }
-            ]
-        },
-        {
-            product_name: 'Lays Classic 52g', total_predicted: 154, predictions: [
-                { day_name: 'Monday', predicted_quantity: 20, confidence_lower: 17, confidence_upper: 23 },
-                { day_name: 'Tuesday', predicted_quantity: 18, confidence_lower: 15, confidence_upper: 21 },
-                { day_name: 'Wednesday', predicted_quantity: 22, confidence_lower: 19, confidence_upper: 25 },
-                { day_name: 'Thursday', predicted_quantity: 21, confidence_lower: 18, confidence_upper: 24 },
-                { day_name: 'Friday', predicted_quantity: 25, confidence_lower: 21, confidence_upper: 29 },
-                { day_name: 'Saturday', predicted_quantity: 26, confidence_lower: 22, confidence_upper: 30 },
-                { day_name: 'Sunday', predicted_quantity: 22, confidence_lower: 19, confidence_upper: 25 }
-            ]
-        },
-        {
-            product_name: 'Mother Dairy Curd 400g', total_predicted: 196, predictions: [
-                { day_name: 'Monday', predicted_quantity: 26, confidence_lower: 22, confidence_upper: 30 },
-                { day_name: 'Tuesday', predicted_quantity: 24, confidence_lower: 20, confidence_upper: 28 },
-                { day_name: 'Wednesday', predicted_quantity: 28, confidence_lower: 24, confidence_upper: 32 },
-                { day_name: 'Thursday', predicted_quantity: 27, confidence_lower: 23, confidence_upper: 31 },
-                { day_name: 'Friday', predicted_quantity: 31, confidence_lower: 26, confidence_upper: 36 },
-                { day_name: 'Saturday', predicted_quantity: 33, confidence_lower: 28, confidence_upper: 38 },
-                { day_name: 'Sunday', predicted_quantity: 27, confidence_lower: 23, confidence_upper: 31 }
-            ]
-        }
-    ],
-    accuracy: {
-        accuracy_percent: 87.5,
-        mape: 12.5,
-        mae: 4.2,
-        total_forecasts: 150,
-        evaluated: 120
-    },
-    weeklyOrder: {
-        total_products: 8,
-        critical_items: 2,
-        total_order_value: 12450.00,
-        suggestions: [
-            { product_name: 'Amul Milk 1L', current_stock: 15, predicted_demand: 245, order_quantity: 250, cost_estimate: 8000 },
-            { product_name: 'Britannia Brown Bread', current_stock: 8, predicted_demand: 168, order_quantity: 180, cost_estimate: 6300 },
-            { product_name: 'Mother Dairy Curd 400g', current_stock: 12, predicted_demand: 196, order_quantity: 200, cost_estimate: 7000 },
-            { product_name: 'Coca Cola 750ml', current_stock: 25, predicted_demand: 189, order_quantity: 180, cost_estimate: 6300 },
-            { product_name: 'Amul Paneer 200g', current_stock: 5, predicted_demand: 85, order_quantity: 100, cost_estimate: 8000 }
-        ]
-    }
-}
-
 export default function DemandForecast() {
+    // Data selection states
+    const [datasets, setDatasets] = useState([])
+    const [models, setModels] = useState([])
+    const [selectedDataset, setSelectedDataset] = useState(null)
+    const [selectedModel, setSelectedModel] = useState(null)
+
+    // Forecast states
     const [forecasts, setForecasts] = useState([])
     const [accuracy, setAccuracy] = useState(null)
     const [weeklyOrder, setWeeklyOrder] = useState(null)
+
+    // UI states
     const [loading, setLoading] = useState(true)
+    const [loadingForecasts, setLoadingForecasts] = useState(false)
     const [training, setTraining] = useState(false)
-    const [hasSalesData, setHasSalesData] = useState(true) // Default to true for demo
+    const [error, setError] = useState(null)
+    const [forecastDays, setForecastDays] = useState(7)
+
     const fileInputRef = useRef(null)
 
     useEffect(() => {
-        loadData()
+        loadInitialData()
     }, [])
 
-    const loadData = async () => {
+    const loadInitialData = async () => {
         setLoading(true)
+        setError(null)
         try {
-            // Check if we have sales data
-            const productsRes = await salesApi.getProducts()
-            const hasData = productsRes.data.products?.length > 0
-            setHasSalesData(hasData || true) // Always show demo
+            // Load available datasets and models in parallel
+            const [datasetsRes, modelsRes] = await Promise.all([
+                datasetsApi.list(),
+                modelsApi.list()
+            ])
 
-            if (hasData) {
-                // Load forecasts and accuracy
+            const availableDatasets = datasetsRes.data.datasets || []
+            const availableModels = modelsRes.data.models || []
+
+            setDatasets(availableDatasets)
+            setModels(availableModels)
+
+            // Auto-select first model if available
+            if (availableModels.length > 0) {
+                setSelectedModel(availableModels[0])
+            }
+
+            // Auto-select first dataset if available
+            if (availableDatasets.length > 0) {
+                setSelectedDataset(availableDatasets[0])
+            }
+
+            // Also try to load any existing forecasts from the forecast service
+            try {
                 const [forecastRes, accuracyRes, orderRes] = await Promise.all([
                     forecastApi.getAll(7),
                     forecastApi.getAccuracy(30),
                     forecastApi.getWeeklyOrder()
                 ])
-                setForecasts(forecastRes.data.forecasts?.length ? forecastRes.data.forecasts : DEMO_DATA.forecasts)
-                setAccuracy(accuracyRes.data?.total_forecasts ? accuracyRes.data : DEMO_DATA.accuracy)
-                setWeeklyOrder(orderRes.data?.suggestions?.length ? orderRes.data : DEMO_DATA.weeklyOrder)
-            } else {
-                // Use demo data
-                setForecasts(DEMO_DATA.forecasts)
-                setAccuracy(DEMO_DATA.accuracy)
-                setWeeklyOrder(DEMO_DATA.weeklyOrder)
+
+                const forecastData = forecastRes.data
+                if (forecastData.forecasts && forecastData.forecasts.length > 0) {
+                    setForecasts(forecastData.forecasts)
+                }
+
+                if (accuracyRes.data && accuracyRes.data.evaluated > 0) {
+                    setAccuracy(accuracyRes.data)
+                }
+
+                if (orderRes.data && orderRes.data.suggestions?.length > 0) {
+                    setWeeklyOrder(orderRes.data)
+                }
+            } catch (forecastError) {
+                console.log('No existing forecasts available:', forecastError.message)
             }
+
         } catch (error) {
             console.error('Failed to load data:', error)
-            // Use demo data on error
-            setForecasts(DEMO_DATA.forecasts)
-            setAccuracy(DEMO_DATA.accuracy)
-            setWeeklyOrder(DEMO_DATA.weeklyOrder)
+            setError('Failed to connect to the server. Please try again.')
         } finally {
             setLoading(false)
         }
     }
 
+    const handleGenerateForecasts = async () => {
+        if (!selectedModel && !selectedDataset) {
+            alert('Please select a model or dataset first')
+            return
+        }
+
+        setLoadingForecasts(true)
+        setError(null)
+
+        try {
+            if (selectedModel) {
+                // Use the selected trained model for predictions
+                // For time series models, we can use batch prediction
+                const result = await forecastApi.getAll(forecastDays)
+
+                if (result.data.forecasts && result.data.forecasts.length > 0) {
+                    setForecasts(result.data.forecasts)
+                } else {
+                    // If no forecasts from forecast API, try generating from the model
+                    setError('No forecast data available. Please train a forecasting model first.')
+                }
+            } else if (selectedDataset) {
+                // Use dataset for forecast training first
+                await forecastApi.train('random_forest', 90)
+                const result = await forecastApi.getAll(forecastDays)
+                setForecasts(result.data.forecasts || [])
+            }
+
+            // Also update weekly order suggestions
+            try {
+                const orderRes = await forecastApi.getWeeklyOrder()
+                if (orderRes.data && orderRes.data.suggestions?.length > 0) {
+                    setWeeklyOrder(orderRes.data)
+                }
+            } catch (e) {
+                console.log('No weekly order data available')
+            }
+
+        } catch (error) {
+            console.error('Forecast generation failed:', error)
+            setError('Failed to generate forecasts: ' + (error.response?.data?.error || error.message))
+        } finally {
+            setLoadingForecasts(false)
+        }
+    }
+
     const handleTrainModel = async () => {
+        if (!selectedDataset) {
+            alert('Please select a dataset first')
+            return
+        }
+
         setTraining(true)
         try {
             const result = await forecastApi.train('random_forest', 90)
             alert(`Model trained! ${result.data.products_trained} products trained.`)
-            loadData()
+            await loadInitialData()
         } catch (error) {
             console.error('Training failed:', error)
             alert('Training failed: ' + (error.response?.data?.error || error.message))
@@ -154,7 +160,7 @@ export default function DemandForecast() {
         try {
             const result = await salesApi.uploadCsv(formData)
             alert(`Imported ${result.data.imported} sales records!`)
-            loadData()
+            await loadInitialData()
         } catch (error) {
             console.error('Upload failed:', error)
             alert('Upload failed: ' + (error.response?.data?.error || error.message))
@@ -167,12 +173,19 @@ export default function DemandForecast() {
         return 'bad'
     }
 
+    const getModelIcon = (type) => {
+        if (type?.includes('classification')) return '🎯'
+        if (type === 'regression') return '📈'
+        if (type === 'timeseries') return '📊'
+        return '🤖'
+    }
+
     if (loading) {
         return (
             <div className="forecast-page">
                 <div className="loading-state">
                     <div className="loading-spinner"></div>
-                    <p>Loading demand forecasts...</p>
+                    <p>Loading models and datasets...</p>
                 </div>
             </div>
         )
@@ -183,51 +196,177 @@ export default function DemandForecast() {
             <div className="forecast-header">
                 <div>
                     <h1>📈 Demand Forecasting</h1>
-                    <p>ML-powered predictions to optimize your inventory orders</p>
+                    <p>Select a trained model and dataset to generate demand predictions</p>
                 </div>
                 <div className="header-actions">
+                    <input
+                        type="file"
+                        accept=".csv"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleUploadCSV}
+                    />
                     <button
-                        className="train-btn"
-                        onClick={handleTrainModel}
-                        disabled={training || !hasSalesData}
+                        className="upload-csv-btn"
+                        onClick={() => fileInputRef.current?.click()}
                     >
-                        {training ? '🔄 Training...' : '🧠 Train Model'}
+                        📁 Upload CSV
                     </button>
-                    <button className="refresh-btn" onClick={loadData}>
+                    <button className="refresh-btn" onClick={loadInitialData}>
                         🔄 Refresh
                     </button>
                 </div>
             </div>
 
-            {!hasSalesData ? (
+            {/* Error State */}
+            {error && (
                 <div className="forecast-section">
-                    <div className="upload-section">
-                        <div className="upload-icon">📊</div>
-                        <h3>Upload Sales Data to Get Started</h3>
-                        <p>Import your historical sales data (CSV) to train the demand forecasting model</p>
-                        <input
-                            type="file"
-                            accept=".csv"
-                            ref={fileInputRef}
-                            style={{ display: 'none' }}
-                            onChange={handleUploadCSV}
-                        />
-                        <button className="upload-btn" onClick={() => fileInputRef.current?.click()}>
-                            📁 Upload Sales CSV
+                    <div className="error-state">
+                        <div className="error-icon">⚠️</div>
+                        <h3>Error</h3>
+                        <p>{error}</p>
+                        <button className="retry-btn" onClick={loadInitialData}>
+                            🔄 Retry
                         </button>
-                        <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#64748b' }}>
-                            CSV should have: product_name, quantity_sold, unit_price, sale_date
-                        </p>
                     </div>
                 </div>
-            ) : (
+            )}
+
+            {/* Model & Dataset Selection Section */}
+            <div className="forecast-section selection-section">
+                <div className="section-header">
+                    <h2>🎯 Select Model & Dataset</h2>
+                </div>
+
+                <div className="selection-grid">
+                    {/* Models Selection */}
+                    <div className="selection-column">
+                        <h3>Trained Models</h3>
+                        <p className="selection-hint">Select a model to use for predictions</p>
+
+                        {models.length > 0 ? (
+                            <div className="selection-list">
+                                {models.map((model) => (
+                                    <div
+                                        key={model.id}
+                                        className={`selection-card ${selectedModel?.id === model.id ? 'selected' : ''}`}
+                                        onClick={() => setSelectedModel(model)}
+                                    >
+                                        <div className="selection-icon">
+                                            {getModelIcon(model.problem_type)}
+                                        </div>
+                                        <div className="selection-info">
+                                            <span className="selection-name">{model.name}</span>
+                                            <span className="selection-meta">
+                                                {model.problem_type?.replace('_', ' ')} • {model.best_score ? `${(model.best_score * 100).toFixed(1)}% accuracy` : 'N/A'}
+                                            </span>
+                                        </div>
+                                        {selectedModel?.id === model.id && (
+                                            <span className="check-icon">✓</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="empty-selection">
+                                <p>No trained models available</p>
+                                <a href="/training" className="link-btn">Train a Model →</a>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Datasets Selection */}
+                    <div className="selection-column">
+                        <h3>Available Datasets</h3>
+                        <p className="selection-hint">Select a dataset for training or reference</p>
+
+                        {datasets.length > 0 ? (
+                            <div className="selection-list">
+                                {datasets.map((dataset) => (
+                                    <div
+                                        key={dataset.id}
+                                        className={`selection-card ${selectedDataset?.id === dataset.id ? 'selected' : ''}`}
+                                        onClick={() => setSelectedDataset(dataset)}
+                                    >
+                                        <div className="selection-icon">📊</div>
+                                        <div className="selection-info">
+                                            <span className="selection-name">{dataset.name}</span>
+                                            <span className="selection-meta">
+                                                {dataset.rows?.toLocaleString() || '?'} rows • {dataset.columns || '?'} columns
+                                            </span>
+                                        </div>
+                                        {selectedDataset?.id === dataset.id && (
+                                            <span className="check-icon">✓</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="empty-selection">
+                                <p>No datasets available</p>
+                                <button
+                                    className="link-btn"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    Upload Dataset →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Forecast Controls */}
+                <div className="forecast-controls">
+                    <div className="control-group">
+                        <label>Forecast Days:</label>
+                        <select
+                            value={forecastDays}
+                            onChange={(e) => setForecastDays(parseInt(e.target.value))}
+                            className="days-select"
+                        >
+                            <option value={7}>7 Days</option>
+                            <option value={14}>14 Days</option>
+                            <option value={30}>30 Days</option>
+                        </select>
+                    </div>
+
+                    <div className="control-buttons">
+                        <button
+                            className="train-btn"
+                            onClick={handleTrainModel}
+                            disabled={training || !selectedDataset}
+                        >
+                            {training ? '🔄 Training...' : '🧠 Train New Model'}
+                        </button>
+
+                        <button
+                            className="generate-btn"
+                            onClick={handleGenerateForecasts}
+                            disabled={loadingForecasts || (!selectedModel && !selectedDataset)}
+                        >
+                            {loadingForecasts ? (
+                                <>
+                                    <span className="spinner"></span>
+                                    Generating...
+                                </>
+                            ) : (
+                                <>🚀 Generate Forecasts</>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Forecasts Display Section */}
+            {forecasts.length > 0 && (
                 <>
                     {/* Model Accuracy Section */}
                     <div className="forecast-section">
                         <div className="section-header">
                             <h2>📊 Model Performance</h2>
+                            <span className="live-badge">🔴 LIVE DATA</span>
                         </div>
-                        {accuracy && accuracy.total_forecasts > 0 ? (
+                        {accuracy && accuracy.evaluated > 0 ? (
                             <div className="accuracy-grid">
                                 <div className="accuracy-card">
                                     <div className={`accuracy-value ${getAccuracyClass(accuracy.accuracy_percent)}`}>
@@ -249,8 +388,8 @@ export default function DemandForecast() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="empty-state">
-                                <p>No accuracy data yet. Train the model and wait for predictions to be verified.</p>
+                            <div className="info-state">
+                                <p>📈 Forecasts generated! Accuracy metrics will appear once predictions are compared with actual sales.</p>
                             </div>
                         )}
                     </div>
@@ -258,47 +397,42 @@ export default function DemandForecast() {
                     {/* Forecasts Table */}
                     <div className="forecast-section">
                         <div className="section-header">
-                            <h2>🔮 7-Day Demand Forecasts</h2>
+                            <h2>🔮 {forecastDays}-Day Demand Forecasts</h2>
+                            <span className="forecast-count">{forecasts.length} products</span>
                         </div>
-                        {forecasts.length > 0 ? (
-                            <div style={{ overflowX: 'auto' }}>
-                                <table className="forecast-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            {forecasts[0]?.predictions?.map((p, i) => (
-                                                <th key={i}>{p.day_name?.slice(0, 3)}</th>
-                                            ))}
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {forecasts.map((forecast, i) => (
-                                            <tr key={i}>
-                                                <td>{forecast.product_name}</td>
-                                                {forecast.predictions?.map((p, j) => (
-                                                    <td key={j}>
-                                                        <div className="prediction-cell">
-                                                            <span className="prediction-value">{p.predicted_quantity}</span>
-                                                            <span className="prediction-range">
-                                                                {p.confidence_lower} - {p.confidence_upper}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                ))}
-                                                <td>
-                                                    <strong>{forecast.total_predicted}</strong>
-                                                </td>
-                                            </tr>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="forecast-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        {forecasts[0]?.predictions?.map((p, i) => (
+                                            <th key={i}>{p.day_name?.slice(0, 3)}</th>
                                         ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>No forecasts available. Train the model first.</p>
-                            </div>
-                        )}
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {forecasts.map((forecast, i) => (
+                                        <tr key={i}>
+                                            <td>{forecast.product_name}</td>
+                                            {forecast.predictions?.map((p, j) => (
+                                                <td key={j}>
+                                                    <div className="prediction-cell">
+                                                        <span className="prediction-value">{p.predicted_quantity}</span>
+                                                        <span className="prediction-range">
+                                                            {p.confidence_lower} - {p.confidence_upper}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            ))}
+                                            <td>
+                                                <strong>{forecast.total_predicted}</strong>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Weekly Order Suggestion */}
@@ -314,7 +448,7 @@ export default function DemandForecast() {
                                         <div className="label">Products to Order</div>
                                     </div>
                                     <div className="order-card">
-                                        <div className="value">{weeklyOrder.critical_items || 0}</div>
+                                        <div className="value critical">{weeklyOrder.critical_items || 0}</div>
                                         <div className="label">Critical Items</div>
                                     </div>
                                     <div className="order-card">
@@ -324,14 +458,16 @@ export default function DemandForecast() {
                                 </div>
                                 <div className="order-items">
                                     {weeklyOrder.suggestions.map((item, i) => (
-                                        <div key={i} className="order-item">
+                                        <div key={i} className={`order-item ${item.urgency}`}>
                                             <div className="order-item-info">
                                                 <span className="order-item-name">{item.product_name}</span>
                                                 <span className="order-item-details">
                                                     Stock: {item.current_stock} | Predicted: {item.predicted_demand}
+                                                    {item.safety_buffer && ` | Buffer: ${item.safety_buffer}`}
                                                 </span>
                                             </div>
                                             <div className="order-item-qty">
+                                                <span className={`urgency-tag ${item.urgency}`}>{item.urgency}</span>
                                                 <span className="order-qty-value">Order: {item.order_quantity}</span>
                                                 <span className="order-cost">₹{item.cost_estimate?.toFixed(2)}</span>
                                             </div>
@@ -339,16 +475,34 @@ export default function DemandForecast() {
                                     ))}
                                 </div>
                                 <button className="create-order-btn">
-                                    Create Purchase Order
+                                    📦 Create Purchase Order
                                 </button>
                             </>
                         ) : (
-                            <div className="empty-state">
-                                <p>✨ All stocked up! No items need ordering based on forecasts.</p>
+                            <div className="success-state">
+                                <p>✨ All stocked up! No items need ordering based on current forecasts and inventory levels.</p>
                             </div>
                         )}
                     </div>
                 </>
+            )}
+
+            {/* Empty state when no forecasts yet */}
+            {forecasts.length === 0 && !error && (
+                <div className="forecast-section">
+                    <div className="empty-forecast-state">
+                        <div className="empty-icon">🔮</div>
+                        <h3>Ready to Generate Forecasts</h3>
+                        <p>
+                            {models.length > 0
+                                ? `Select a model above and click "Generate Forecasts" to see demand predictions.`
+                                : datasets.length > 0
+                                    ? `Select a dataset and click "Train New Model" to create your forecasting model.`
+                                    : `Upload a sales dataset to get started with demand forecasting.`
+                            }
+                        </p>
+                    </div>
+                </div>
             )}
         </div>
     )
