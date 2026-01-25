@@ -29,7 +29,7 @@ const navItems = [
     { path: '/predictions', icon: Sparkles, label: 'Predictions' },
     { path: '/reasoning', icon: Brain, label: 'AI Reasoning' },
     { path: '/inventory', icon: Package, label: 'AI Inventory' },
-    { path: '/forecast', icon: TrendingUp, label: 'Demand Forecast' },
+
     { path: '/sales', icon: ShoppingCart, label: 'Sales Input' },
     { path: '/daily-items', icon: Milk, label: 'Daily Items' },
 ]

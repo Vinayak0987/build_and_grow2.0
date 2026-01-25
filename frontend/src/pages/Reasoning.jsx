@@ -528,12 +528,12 @@ export default function Reasoning() {
                             {/* Navigate to Inventory Button */}
                             {orderSuggestions.suggested_items?.length > 0 && (
                                 <div className="proceed-to-inventory">
-                                    <a href="/inventory" className="btn btn-success proceed-btn">
+                                    <a href="/daily-items" className="btn btn-success proceed-btn">
                                         <span>🛒</span>
-                                        Proceed to Inventory for Purchase Order
+                                        Proceed to Vendor Selection & Orders
                                         <span>→</span>
                                     </a>
-                                    <p className="proceed-hint">Select vendors and send quotation requests</p>
+                                    <p className="proceed-hint">Select vendors and process daily items</p>
                                 </div>
                             )}
                         </div>

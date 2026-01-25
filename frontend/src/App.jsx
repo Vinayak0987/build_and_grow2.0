@@ -9,7 +9,7 @@ import Models from './pages/Models'
 import Predictions from './pages/Predictions'
 import Reasoning from './pages/Reasoning'
 import Inventory from './pages/Inventory'
-import DemandForecast from './pages/DemandForecast'
+
 import DailyItems from './pages/DailyItems'
 import SalesInput from './pages/SalesInput'
 import Login from './pages/Login'
@@ -67,7 +67,7 @@ function App() {
                                         <Route path="/predictions/:modelId?" element={<Predictions />} />
                                         <Route path="/reasoning" element={<Reasoning />} />
                                         <Route path="/inventory" element={<Inventory />} />
-                                        <Route path="/forecast" element={<DemandForecast />} />
+
                                         <Route path="/daily-items" element={<DailyItems />} />
                                         <Route path="/sales" element={<SalesInput />} />
                                     </Routes>

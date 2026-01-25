@@ -1,310 +1,576 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Inventory.css';
-import { useInventoryStore } from '../store/inventoryStore';
-import { useVendorStore } from '../store/vendorStore';
-import {
-    RefreshCw,
-    TrendingUp,
-    CheckCircle2,
-    Truck,
-    Package,
-    AlertCircle,
-    Users,
-    Plus,
-    Search,
-    ShoppingBag,
-    DollarSign,
-    Clock,
-    ArrowRight,
-    ArrowLeft
-} from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { useInventoryStore } from '../store/inventoryStore'
+import { inventoryApi } from '../services/api'
+import './Inventory.css'
 
-const Inventory = () => {
-    const navigate = useNavigate();
-    const { orderSuggestions } = useInventoryStore();
-    const { vendors, addVendor } = useVendorStore();
+// Fallback Demo Data (only used when no AI analysis has been run)
+const DEMO_DATA = {
+    orders: {
+        suggested_items: [],
+        critical_count: 0,
+        high_priority_count: 0,
+        estimated_total_cost: 0,
+        ai_reasoning: 'Run AI Analysis in the Reasoning page to get personalized order suggestions based on your data.'
+    }
+}
 
-    // Local state for UI interactions
-    const [refreshing, setRefreshing] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1); // 0: Analysis, 1: Selection, 2: Approval, 3: Ordering
-    const [selectedVendorIds, setSelectedVendorIds] = useState([]);
-    const [showAddVendor, setShowAddVendor] = useState(false);
-    const [newVendor, setNewVendor] = useState({ name: '', category: 'General' });
+const DEMO_VENDORS = [
+    { id: 1, name: 'Metro Cash & Carry', contact: '+91 9876543210', email: 'metro@example.com', category: 'Wholesale', rating: 4.5 },
+    { id: 2, name: 'Reliance Fresh', contact: '+91 9876543211', email: 'reliance@example.com', category: 'Retail', rating: 4.2 },
+    { id: 3, name: 'DMart Distributor', contact: '+91 9876543212', email: 'dmart@example.com', category: 'Wholesale', rating: 4.8 },
+    { id: 4, name: 'BigBasket Supplier', contact: '+91 9876543213', email: 'bigbasket@example.com', category: 'Online', rating: 4.3 }
+]
 
-    // Enriched vendor data (mocking fields not in store)
-    const enrichedVendors = vendors.map(v => ({
-        ...v,
-        rating: (4.0 + Math.random()).toFixed(1),
-        deliveryTime: ['1 Day', '2 Days', '3 Days', '5 Days'][Math.floor(Math.random() * 4)],
-        price: ['$$', '$$$', '$'][Math.floor(Math.random() * 3)]
-    }));
+// Order tracking steps
+const TRACKING_STEPS = {
+    QUOTATION_SENT: 'quotation_sent',
+    SELECT_VENDOR: 'select_vendor',
+    VENDOR_SELECTED: 'vendor_selected',
+    ORDER_PLACED: 'order_placed'
+}
 
-    // Derive items from store or use fallback
-    const items = orderSuggestions?.suggested_items?.map((item, idx) => ({
-        id: idx,
-        name: item.item_name,
-        qty: item.order_quantity,
-        cost: `$${item.estimated_cost}`,
-        urgency: item.urgency || 'medium'
-    })) || [];
+export default function Inventory() {
+    // Get order suggestions from the shared store (populated by AI Reasoning page)
+    const { orderSuggestions: storedOrderSuggestions, lastUpdated } = useInventoryStore()
 
-    const handleRefresh = () => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1500);
-    };
+    const [orderSuggestions, setOrderSuggestions] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [refreshing, setRefreshing] = useState(false)
 
-    const toggleVendor = (id) => {
-        if (selectedVendorIds.includes(id)) {
-            setSelectedVendorIds(selectedVendorIds.filter(v => v !== id));
-        } else {
-            setSelectedVendorIds([...selectedVendorIds, id]);
+    // Vendor states - now supports multiple selection
+    const [vendors, setVendors] = useState(DEMO_VENDORS)
+    const [selectedVendors, setSelectedVendors] = useState([]) // Array of selected vendor IDs
+    const [showAddVendor, setShowAddVendor] = useState(false)
+    const [newVendor, setNewVendor] = useState({ name: '', contact: '', email: '', category: 'Wholesale' })
+
+    // Purchase tracking states
+    const [purchaseOrder, setPurchaseOrder] = useState(null)
+    const [trackingStep, setTrackingStep] = useState(null)
+    const [finalVendor, setFinalVendor] = useState(null) // The vendor selected from dropdown
+    const [sendingEmails, setSendingEmails] = useState(false)
+
+    useEffect(() => {
+        loadOrderSuggestions()
+    }, [storedOrderSuggestions])
+
+    const loadOrderSuggestions = async () => {
+        setLoading(true)
+
+        // First, check if we have data from the AI Reasoning page
+        if (storedOrderSuggestions && storedOrderSuggestions.suggested_items?.length > 0) {
+            setOrderSuggestions(storedOrderSuggestions)
+            setLoading(false)
+            return
         }
-    };
+
+        // If no stored data, try to fetch from API
+        try {
+            const orders = await inventoryApi.suggestOrder()
+            if (orders.data?.suggested_items?.length > 0) {
+                setOrderSuggestions(orders.data)
+            } else {
+                // Use empty demo data with message to run AI analysis
+                setOrderSuggestions(DEMO_DATA.orders)
+            }
+        } catch (error) {
+            console.error('Failed to load analysis:', error)
+            // Use empty demo data with message
+            setOrderSuggestions(DEMO_DATA.orders)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleRefresh = async () => {
+        setRefreshing(true)
+        await loadOrderSuggestions()
+        setRefreshing(false)
+    }
 
     const handleAddVendor = () => {
-        if (newVendor.name) {
-            addVendor({ ...newVendor, contact: 'N/A', email: 'N/A' });
-            setNewVendor({ name: '', category: 'General' });
-            setShowAddVendor(false);
-        }
-    };
+        if (!newVendor.name || !newVendor.contact) return
 
-    const handlePlaceOrder = () => {
-        if (selectedVendorIds.length === 0) {
-            alert("Please select at least one vendor.");
-            return;
+        const vendor = {
+            id: Date.now(),
+            ...newVendor,
+            rating: 0
         }
-        setCurrentStep(2);
+        setVendors([...vendors, vendor])
+        setNewVendor({ name: '', contact: '', email: '', category: 'Wholesale' })
+        setShowAddVendor(false)
+    }
+
+    const handleToggleVendor = (vendorId) => {
+        setSelectedVendors(prev => {
+            if (prev.includes(vendorId)) {
+                return prev.filter(id => id !== vendorId)
+            } else {
+                return [...prev, vendorId]
+            }
+        })
+    }
+
+    const handleSelectAllVendors = () => {
+        if (selectedVendors.length === vendors.length) {
+            setSelectedVendors([])
+        } else {
+            setSelectedVendors(vendors.map(v => v.id))
+        }
+    }
+
+    const handleSendQuotations = async () => {
+        if (selectedVendors.length === 0 || !orderSuggestions?.suggested_items?.length) return
+
+        setSendingEmails(true)
+
+        const selectedVendorsList = vendors.filter(v => selectedVendors.includes(v.id))
+
+        // Simulate sending emails to all selected vendors
+        await new Promise(resolve => setTimeout(resolve, 2000))
+
+        const orderData = {
+            orderId: `PO-${Date.now()}`,
+            quotationVendors: selectedVendorsList,
+            items: orderSuggestions.suggested_items,
+            subtotal: orderSuggestions.estimated_total_cost,
+            total: orderSuggestions.estimated_total_cost,
+            ai_reasoning: orderSuggestions.ai_reasoning,
+            urgency_level: orderSuggestions.critical_count > 0 ? 'critical' :
+                orderSuggestions.high_priority_count > 0 ? 'high' : 'normal',
+            createdAt: new Date().toISOString(),
+            quotationSentAt: new Date().toISOString()
+        }
+
+        setPurchaseOrder(orderData)
+        setTrackingStep(TRACKING_STEPS.QUOTATION_SENT)
+        setSendingEmails(false)
+
+        // Auto-progress to select vendor step after 2 seconds
         setTimeout(() => {
-            setCurrentStep(3);
-            alert("Orders placed successfully!");
-        }, 1500);
-    };
+            setTrackingStep(TRACKING_STEPS.SELECT_VENDOR)
+        }, 2000)
+    }
 
-    const trackingSteps = [
-        { label: "AI Analysis", time: "Completed", detail: `${items.length} Items Identified` },
-        { label: "Vendor Selection", time: "In Progress", detail: `${selectedVendorIds.length} Vendors Selected` },
-        { label: "Approval", time: "Pending", detail: "Waiting for Confirmation" },
-        { label: "Ordering", time: "Next Step", detail: "Auto-Dispatch" }
-    ];
+    const handleFinalVendorSelect = (vendorId) => {
+        const vendor = vendors.find(v => v.id === parseInt(vendorId))
+        setFinalVendor(vendor)
+        setTrackingStep(TRACKING_STEPS.VENDOR_SELECTED)
+    }
+
+    const handlePlaceOrder = async () => {
+        if (!finalVendor) return
+
+        // Simulate sending order confirmation email
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
+        setPurchaseOrder(prev => ({
+            ...prev,
+            finalVendor: finalVendor,
+            orderPlacedAt: new Date().toISOString(),
+            estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        }))
+        setTrackingStep(TRACKING_STEPS.ORDER_PLACED)
+
+        // Try to create order in backend
+        try {
+            await inventoryApi.createOrder(purchaseOrder)
+        } catch (error) {
+            console.error('Failed to save order:', error)
+        }
+    }
+
+    const getTrackingStepIndex = () => {
+        const steps = [
+            TRACKING_STEPS.QUOTATION_SENT,
+            TRACKING_STEPS.SELECT_VENDOR,
+            TRACKING_STEPS.VENDOR_SELECTED,
+            TRACKING_STEPS.ORDER_PLACED
+        ]
+        return steps.indexOf(trackingStep)
+    }
+
+    const hasActionItems = orderSuggestions?.suggested_items?.length > 0
+    const selectedVendorsList = vendors.filter(v => selectedVendors.includes(v.id))
 
     return (
         <div className="inventory-page">
-            <header className="inventory-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                        onClick={() => navigate('/reasoning')}
-                        style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
-                    <div>
-                        <h1>Smart Inventory Management</h1>
-                        <p>AI Action Items & Vendor Procurement</p>
-                    </div>
+            <div className="inventory-header">
+                <div>
+                    <h1>🤖 AI Inventory Center</h1>
+                    <p>Order Generation Agent - Smart inventory replenishment</p>
+                    {lastUpdated && (
+                        <span className="last-updated">
+                            Last analyzed: {new Date(lastUpdated).toLocaleString()}
+                        </span>
+                    )}
                 </div>
                 <button
                     className={`refresh-btn ${refreshing ? 'spinning' : ''}`}
                     onClick={handleRefresh}
                     disabled={refreshing}
                 >
-                    <RefreshCw size={20} />
-                    {refreshing ? 'Syncing...' : 'Sync Data'}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
                 </button>
-            </header>
+            </div>
 
-            {/* Content Grid */}
-            <div className="inventory-content">
-
-                {/* Left Column: Action Items */}
-                <div className="agent-card">
-                    <div className="agent-header">
-                        <div className="agent-icon order">
-                            <ShoppingBag color="white" size={24} />
+            {/* Purchase Tracking Section - Shows when quotations are sent */}
+            {purchaseOrder && trackingStep && (
+                <div className="purchase-tracking-section">
+                    <div className="tracking-header">
+                        <div className="tracking-title">
+                            <span className="tracking-icon">📋</span>
+                            <div>
+                                <h2>Purchase Order Tracking</h2>
+                                <p>Order ID: {purchaseOrder.orderId}</p>
+                            </div>
                         </div>
-                        <div className="agent-title">
-                            <h3>AI Action Items</h3>
-                            <p>Items identified from Reasoning Analysis</p>
+                        <div className="tracking-vendor-count">
+                            <span className="vendor-label">Vendors Contacted:</span>
+                            <span className="vendor-count">{purchaseOrder.quotationVendors?.length || 0}</span>
                         </div>
                     </div>
 
-                    {items.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                            <p>No action items found.</p>
-                            <button
-                                onClick={() => navigate('/reasoning')}
-                                style={{ marginTop: '1rem', background: 'transparent', border: '1px solid #64748b', color: '#94a3b8', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
-                            >
-                                Go to AI Analysis
-                            </button>
+                    <div className="tracking-progress">
+                        {/* Step 1: Quotation Sent */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 0 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.QUOTATION_SENT ? 'current' : ''}`}>
+                            <div className="step-icon">📧</div>
+                            <div className="step-content">
+                                <span className="step-label">Quotation Request Sent</span>
+                                <span className="step-time">
+                                    {new Date(purchaseOrder.quotationSentAt).toLocaleString()}
+                                </span>
+                                <span className="step-detail">
+                                    Sent to {purchaseOrder.quotationVendors?.length} vendors
+                                </span>
+                            </div>
+                            <div className={`step-connector ${getTrackingStepIndex() >= 1 ? 'active' : ''}`}></div>
                         </div>
-                    ) : (
-                        <>
-                            <div className="stats-grid">
-                                <div className="stat-item">
-                                    <div className="stat-value warning">{items.length}</div>
-                                    <div className="stat-label">Restock Items</div>
-                                </div>
-                                <div className="stat-item">
-                                    <div className="stat-value success">{orderSuggestions?.critical_count || 0}</div>
-                                    <div className="stat-label">Critical Priority</div>
-                                </div>
-                            </div>
 
-                            <div className="ai-insights">
-                                <div className="ai-insights-header">
-                                    <TrendingUp size={16} />
-                                    <span>REASONING INSIGHT</span>
-                                </div>
-                                <p>{orderSuggestions?.ai_reasoning || "AI analysis indicates these items require immediate restocking to avoid potential stockouts based on current velocity."}</p>
+                        {/* Step 2: Select Vendor */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 1 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.SELECT_VENDOR ? 'current' : ''}`}>
+                            <div className="step-icon">🔍</div>
+                            <div className="step-content">
+                                <span className="step-label">Select Vendor</span>
+                                {trackingStep === TRACKING_STEPS.SELECT_VENDOR && (
+                                    <div className="vendor-dropdown-container">
+                                        <select
+                                            className="vendor-dropdown"
+                                            value={finalVendor?.id || ''}
+                                            onChange={(e) => handleFinalVendorSelect(e.target.value)}
+                                        >
+                                            <option value="">-- Select Best Vendor --</option>
+                                            {purchaseOrder.quotationVendors?.map(vendor => (
+                                                <option key={vendor.id} value={vendor.id}>
+                                                    {vendor.name} ({vendor.category})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="dropdown-hint">Choose the vendor with the best quotation</p>
+                                    </div>
+                                )}
                             </div>
+                            <div className={`step-connector ${getTrackingStepIndex() >= 2 ? 'active' : ''}`}></div>
+                        </div>
 
-                            <h4 style={{ marginTop: '1.5rem', marginBottom: '1rem', color: '#e2e8f0' }}>Suggested Orders</h4>
-                            <div className="suggested-items">
-                                {items.map(item => (
-                                    <div key={item.id} className="order-item">
-                                        <div className="details">
-                                            <span className="name">{item.name}</span>
-                                            <span className="qty">Order: {item.qty} units • Est: {item.cost}</span>
-                                        </div>
-                                        <span className={`urgency-badge ${item.urgency}`}>
-                                            {item.urgency}
+                        {/* Step 3: Vendor Selected */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 2 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.VENDOR_SELECTED ? 'current' : ''}`}>
+                            <div className="step-icon">✓</div>
+                            <div className="step-content">
+                                <span className="step-label">Vendor Selected</span>
+                                {finalVendor && (
+                                    <span className="step-detail selected-vendor">{finalVendor.name}</span>
+                                )}
+                                {trackingStep === TRACKING_STEPS.VENDOR_SELECTED && (
+                                    <button className="place-order-btn" onClick={handlePlaceOrder}>
+                                        📦 Confirm & Place Order
+                                    </button>
+                                )}
+                            </div>
+                            <div className={`step-connector ${getTrackingStepIndex() >= 3 ? 'active' : ''}`}></div>
+                        </div>
+
+                        {/* Step 4: Order Placed */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 3 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.ORDER_PLACED ? 'current' : ''}`}>
+                            <div className="step-icon">🎉</div>
+                            <div className="step-content">
+                                <span className="step-label">Order Placed</span>
+                                {trackingStep === TRACKING_STEPS.ORDER_PLACED && (
+                                    <>
+                                        <span className="step-time">
+                                            {new Date(purchaseOrder.orderPlacedAt).toLocaleString()}
                                         </span>
-                                    </div>
-                                ))}
+                                        <span className="step-detail success">
+                                            ✉️ Confirmation email sent to {finalVendor?.name}
+                                        </span>
+                                    </>
+                                )}
                             </div>
-                        </>
-                    )}
+                        </div>
+                    </div>
+
+                    {/* Order Summary */}
+                    <div className="tracking-details">
+                        <div className="tracking-detail-item">
+                            <span className="detail-label">Total Items</span>
+                            <span className="detail-value">{purchaseOrder.items.length}</span>
+                        </div>
+                        <div className="tracking-detail-item">
+                            <span className="detail-label">Total Amount</span>
+                            <span className="detail-value amount">₹{purchaseOrder.total.toFixed(2)}</span>
+                        </div>
+                        <div className="tracking-detail-item">
+                            <span className="detail-label">Priority</span>
+                            <span className={`detail-value priority ${purchaseOrder.urgency_level}`}>
+                                {purchaseOrder.urgency_level.toUpperCase()}
+                            </span>
+                        </div>
+                        {purchaseOrder.estimatedDelivery && (
+                            <div className="tracking-detail-item">
+                                <span className="detail-label">Est. Delivery</span>
+                                <span className="detail-value">
+                                    {new Date(purchaseOrder.estimatedDelivery).toLocaleDateString()}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
+            )}
 
-                {/* Right Column: Vendors & Process */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-
-                    {/* Process Tracker */}
-                    <section className="purchase-tracking-section" style={{ marginBottom: 0 }}>
-                        <div className="tracking-header">
-                            <div className="tracking-title">
-                                <Truck color="#22c55e" size={20} style={{ marginRight: '0.5rem' }} />
-                                <h2 style={{ fontSize: '1rem' }}>Procurement Flow</h2>
+            {loading ? (
+                <div className="loading-state">
+                    <div className="loading-spinner"></div>
+                    <p>Loading inventory data...</p>
+                </div>
+            ) : (
+                <div className="inventory-content">
+                    {/* Order Generation Agent */}
+                    <div className="agent-card order-agent">
+                        <div className="agent-header">
+                            <div className="agent-icon order">🛒</div>
+                            <div className="agent-title">
+                                <h3>Order Generation Agent</h3>
+                                <p>AI-powered reorder suggestions from your data</p>
                             </div>
                         </div>
-                        <div className="tracking-progress" style={{ marginBottom: 0 }}>
-                            <div className={`step-connector ${currentStep >= 1 ? 'active' : ''}`} style={{ width: '33%', left: '16%' }}></div>
-                            <div className={`step-connector ${currentStep >= 2 ? 'active' : ''}`} style={{ width: '33%', left: '50%' }}></div>
-                            <div className={`step-connector ${currentStep >= 3 ? 'active' : ''}`} style={{ width: '33%', left: '83%' }}></div>
-
-                            {trackingSteps.map((step, index) => (
-                                <div key={index} className={`tracking-step ${index <= currentStep ? 'active' : ''} ${index === currentStep ? 'current' : ''}`}>
-                                    <div className="step-icon" style={{ width: 32, height: 32, fontSize: '0.8rem' }}>
-                                        {index < currentStep ? <CheckCircle2 size={16} /> :
-                                            index === currentStep ? <Clock size={16} /> :
-                                                <div style={{ width: 8, height: 8, background: '#64748b', borderRadius: '50%' }} />}
-                                    </div>
-                                    <div className="step-content">
-                                        <span className="step-label" style={{ fontSize: '0.75rem' }}>{step.label}</span>
-                                    </div>
+                        <div className="agent-content">
+                            {!hasActionItems ? (
+                                <div className="no-data-state">
+                                    <div className="no-data-icon">📊</div>
+                                    <h4>No Action Items Available</h4>
+                                    <p>Run AI Analysis in the <strong>Reasoning</strong> page to generate personalized order suggestions based on your datasets.</p>
+                                    <a href="/reasoning" className="go-to-reasoning-btn">
+                                        Go to AI Reasoning →
+                                    </a>
                                 </div>
-                            ))}
+                            ) : (
+                                <>
+                                    <div className="order-summary">
+                                        <div className="stat-item">
+                                            <div className="stat-value info">{orderSuggestions.total_items || orderSuggestions.suggested_items?.length || 0}</div>
+                                            <div className="stat-label">Items to Order</div>
+                                        </div>
+                                        <div className="stat-item">
+                                            <div className="stat-value critical">{orderSuggestions.critical_count || 0}</div>
+                                            <div className="stat-label">Critical</div>
+                                        </div>
+                                        <div className="stat-item">
+                                            <div className="stat-value warning">{orderSuggestions.high_priority_count || 0}</div>
+                                            <div className="stat-label">High Priority</div>
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '1rem',
+                                        background: 'rgba(15, 23, 42, 0.6)',
+                                        borderRadius: '12px',
+                                        marginBottom: '1rem'
+                                    }}>
+                                        <div style={{ color: '#64748b', fontSize: '0.8rem' }}>Estimated Total</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#22c55e' }}>
+                                            ₹{(orderSuggestions.estimated_total_cost || 0).toFixed(2)}
+                                        </div>
+                                    </div>
+                                    {orderSuggestions.suggested_items?.length > 0 && (
+                                        <div className="suggested-items">
+                                            {orderSuggestions.suggested_items.slice(0, 8).map((item, i) => (
+                                                <div key={i} className="order-item">
+                                                    <div className="details">
+                                                        <span className="name">{item.item_name}</span>
+                                                        <span className="qty">
+                                                            Current: {item.current_quantity || 0} → Order: +{item.suggested_quantity || item.order_quantity} {item.unit || 'units'}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`urgency-badge ${item.urgency}`}>{item.urgency}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {orderSuggestions.ai_reasoning && (
+                                        <div className="ai-insights">
+                                            <div className="ai-insights-header">
+                                                <span>✨</span> AI Reasoning
+                                            </div>
+                                            <p>{orderSuggestions.ai_reasoning}</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
-                    </section>
+                    </div>
 
                     {/* Vendors Section */}
-                    <div className="vendors-section" style={{ flex: 1 }}>
+                    <div className="vendors-section">
                         <div className="vendors-header">
                             <div className="vendors-title">
-                                <Users color="#ec4899" size={20} style={{ marginRight: '0.5rem' }} />
-                                <h3>Select Vendors</h3>
+                                <span className="vendors-icon">🏪</span>
+                                <div>
+                                    <h3>Vendors</h3>
+                                    <p>Select vendors to request quotations</p>
+                                </div>
                             </div>
-                            <button className="add-vendor-btn" onClick={() => setShowAddVendor(!showAddVendor)}>
-                                <Plus size={16} style={{ display: 'inline', marginRight: '4px' }} />
-                                Add
+                            <button
+                                className="add-vendor-btn"
+                                onClick={() => setShowAddVendor(!showAddVendor)}
+                            >
+                                {showAddVendor ? '✕ Cancel' : '+ Add Vendor'}
                             </button>
                         </div>
 
+                        {/* Add Vendor Form */}
                         {showAddVendor && (
-                            <div className="add-vendor-form" style={{ display: 'block', marginBottom: '1rem' }}>
+                            <div className="add-vendor-form">
                                 <div className="form-row">
                                     <input
                                         type="text"
-                                        placeholder="Vendor Name"
+                                        placeholder="Vendor Name *"
                                         value={newVendor.name}
-                                        onChange={e => setNewVendor({ ...newVendor, name: e.target.value })}
+                                        onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Contact Number *"
+                                        value={newVendor.contact}
+                                        onChange={(e) => setNewVendor({ ...newVendor, contact: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <input
+                                        type="email"
+                                        placeholder="Email Address"
+                                        value={newVendor.email}
+                                        onChange={(e) => setNewVendor({ ...newVendor, email: e.target.value })}
                                     />
                                     <select
                                         value={newVendor.category}
-                                        onChange={e => setNewVendor({ ...newVendor, category: e.target.value })}
+                                        onChange={(e) => setNewVendor({ ...newVendor, category: e.target.value })}
                                     >
-                                        <option>General</option>
-                                        <option>Electronics</option>
-                                        <option>Raw Materials</option>
-                                        <option>Logistics</option>
+                                        <option value="Wholesale">Wholesale</option>
+                                        <option value="Retail">Retail</option>
+                                        <option value="Online">Online</option>
+                                        <option value="Local">Local</option>
                                     </select>
                                 </div>
-                                <button className="save-vendor-btn" onClick={handleAddVendor}>Save New Vendor</button>
+                                <button className="save-vendor-btn" onClick={handleAddVendor}>
+                                    Save Vendor
+                                </button>
                             </div>
                         )}
 
+                        {/* Select All Toggle */}
                         <div className="select-all-row">
                             <label className="checkbox-label">
                                 <input
                                     type="checkbox"
-                                    checked={selectedVendorIds.length === enrichedVendors.length && enrichedVendors.length > 0}
-                                    onChange={() => {
-                                        if (selectedVendorIds.length === enrichedVendors.length) setSelectedVendorIds([]);
-                                        else setSelectedVendorIds(enrichedVendors.map(v => v.id));
-                                    }}
+                                    checked={selectedVendors.length === vendors.length}
+                                    onChange={handleSelectAllVendors}
                                 />
-                                <span>Select All</span>
+                                <span>Select All Vendors ({vendors.length})</span>
                             </label>
-                            <span className="selected-count">{selectedVendorIds.length} Selected</span>
+                            {selectedVendors.length > 0 && (
+                                <span className="selected-count">{selectedVendors.length} selected</span>
+                            )}
                         </div>
 
+                        {/* Vendors List */}
                         <div className="vendors-list">
-                            {enrichedVendors.map(vendor => (
+                            {vendors.map((vendor) => (
                                 <div
                                     key={vendor.id}
-                                    className={`vendor-card ${selectedVendorIds.includes(vendor.id) ? 'selected' : ''}`}
-                                    onClick={() => toggleVendor(vendor.id)}
+                                    className={`vendor-card ${selectedVendors.includes(vendor.id) ? 'selected' : ''}`}
+                                    onClick={() => handleToggleVendor(vendor.id)}
                                 >
                                     <div className="vendor-checkbox">
                                         <input
                                             type="checkbox"
-                                            checked={selectedVendorIds.includes(vendor.id)}
-                                            readOnly
+                                            checked={selectedVendors.includes(vendor.id)}
+                                            onChange={() => { }}
                                         />
                                     </div>
                                     <div className="vendor-info">
-                                        <div className="vendor-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+                                        <div className="vendor-avatar">
                                             {vendor.name.charAt(0)}
                                         </div>
-                                        <div>
-                                            <div style={{ color: '#f1f5f9', fontWeight: '600' }}>{vendor.name}</div>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{vendor.category}</div>
+                                        <div className="vendor-details">
+                                            <span className="vendor-name">{vendor.name}</span>
+                                            <span className="vendor-category">{vendor.category}</span>
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ color: '#22c55e', fontWeight: '600' }}>{vendor.price}</div>
-                                        <div style={{ color: '#64748b', fontSize: '0.8rem' }}>{vendor.deliveryTime}</div>
+                                    <div className="vendor-meta">
+                                        <div className="vendor-contact">
+                                            <span className="contact-icon">📧</span>
+                                            <span>{vendor.email}</span>
+                                        </div>
+                                        {vendor.rating > 0 && (
+                                            <div className="vendor-rating">
+                                                <span className="rating-star">⭐</span>
+                                                <span>{vendor.rating}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <button
-                            className="place-order-btn"
-                            style={{ width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={handlePlaceOrder}
-                            disabled={currentStep > 1}
-                        >
-                            <span>{currentStep > 1 ? 'Processing...' : 'Approve & Place Orders'}</span>
-                            <ArrowRight size={18} />
-                        </button>
+                        {/* Send Quotations Button */}
+                        {selectedVendors.length > 0 && hasActionItems && !purchaseOrder && (
+                            <button
+                                className="send-quotations-btn"
+                                onClick={handleSendQuotations}
+                                disabled={sendingEmails}
+                            >
+                                {sendingEmails ? (
+                                    <>
+                                        <span className="spinner-small"></span>
+                                        Sending Quotation Requests...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="btn-icon">📧</span>
+                                        Send Quotation Request to {selectedVendors.length} Vendor{selectedVendors.length > 1 ? 's' : ''}
+                                    </>
+                                )}
+                            </button>
+                        )}
+
+                        {/* Message when no action items */}
+                        {selectedVendors.length > 0 && !hasActionItems && (
+                            <div className="no-items-message">
+                                <p>⚠️ No action items available. Run AI Analysis first to generate order suggestions.</p>
+                            </div>
+                        )}
+
+                        {/* Hint when no vendors selected */}
+                        {selectedVendors.length === 0 && hasActionItems && !purchaseOrder && (
+                            <div className="select-vendor-hint">
+                                <p>👆 Select one or more vendors above to request quotations</p>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+            )}
         </div>
-    );
-};
-
-export default Inventory;
+    )
+}
