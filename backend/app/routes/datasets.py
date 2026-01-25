@@ -22,7 +22,14 @@ def allowed_file(filename):
 def list_datasets():
     """List all datasets for current user"""
     user_id = int(get_jwt_identity())
+    
+    print(f"[DEBUG] Listing datasets for user_id: {user_id}", flush=True)
+    
     datasets = Dataset.query.filter_by(user_id=user_id).order_by(Dataset.created_at.desc()).all()
+    
+    print(f"[DEBUG] Found {len(datasets)} datasets in database", flush=True)
+    for ds in datasets:
+        print(f"[DEBUG]   - {ds.id}: {ds.name} | file_path={ds.file_path}", flush=True)
     
     return jsonify({
         'datasets': [d.to_dict() for d in datasets],

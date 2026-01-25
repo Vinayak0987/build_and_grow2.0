@@ -32,6 +32,7 @@ def create_app(config_class=Config):
     from .routes.training import training_bp
     from .routes.predictions import predictions_bp
     from .routes.models import models_bp
+    from .routes.model_dashboard import model_dashboard_bp
     from .routes.orders import orders_bp
     from .routes.inventory_routes import inventory_bp
     from .routes.sales_routes import sales_bp
@@ -43,6 +44,7 @@ def create_app(config_class=Config):
     app.register_blueprint(training_bp, url_prefix='/api/training')
     app.register_blueprint(predictions_bp, url_prefix='/api/predict')
     app.register_blueprint(models_bp, url_prefix='/api/models')
+    app.register_blueprint(model_dashboard_bp, url_prefix='/api/models')
     app.register_blueprint(orders_bp, url_prefix='/api/orders')
     app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
     app.register_blueprint(sales_bp, url_prefix='/api/sales')

@@ -17,7 +17,40 @@ The platform is built entirely on **open-source technologies**, including **Stre
 * ⚡ **8 AI Agents** for comprehensive automation
 * ⚙️ **Automated data profiling, preprocessing, and model training**
 * 📈 **Built-in model evaluation and explainability**
+* 🔮 **7-Day Demand Forecasting** with confidence bounds
+* 🤖 **AI-Powered Recommendations** for inventory decisions
 * 🧩 **Open-source, lightweight, and scalable-by-design**
+
+---
+
+## ✨ New Features
+
+### 📊 Model Dashboard
+A comprehensive analytics dashboard for every trained model:
+- **Overview Tab**: Model summary, performance metrics, and quick stats
+- **Data Explorer Tab**: Interactive data visualization with filters
+- **Forecast Tab**: 7-day demand forecasting with AI recommendations
+- **Analytics Tab**: Advanced charts and insights
+- **Explainability Tab**: SHAP values and feature importance
+- **Export Tab**: Download models and predictions
+
+### 🔮 Forecast Tab Features
+The Forecast tab provides comprehensive demand forecasting capabilities:
+
+| Feature | Description |
+|---------|-------------|
+| **Total Forecast Chart** | Daily aggregated demand visualization |
+| **Product Comparison Chart** | Multi-product line/bar/area charts with product selection |
+| **Individual Product Forecast** | Single product view with min/max confidence bounds |
+| **7-Day Forecast Table** | Detailed predictions with confidence ranges per product |
+| **AI Recommendations** | LLM-powered insights and restock suggestions |
+
+### 🤖 AI-Powered Recommendations
+Click "Get AI Recommendations" to receive:
+- **Demand Insights**: Highest/lowest demand products identified
+- **Peak Day Analysis**: Busiest days highlighted for staffing
+- **Restock Suggestions**: Ranked order quantities with reasoning
+- **Weekly Trends**: Pattern analysis and actionable advice
 
 ---
 
