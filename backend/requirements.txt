@@ -1,5 +1,5 @@
 # ======================
-# InferX-ML Backend Dependencies
+# InventraAI Backend Dependencies
 # ======================
 
 # Core Framework

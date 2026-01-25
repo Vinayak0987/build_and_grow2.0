@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { dailyItemsApi } from '../services/api'
 import './DailyItems.css'
+import { VENDORS_LIST } from '../constants/vendors'
 
 // Hardcoded Demo Data
 const DEMO_ITEMS = [
@@ -32,7 +33,8 @@ export default function DailyItems() {
         expected_daily_quantity: 0,
         min_daily_quantity: 0,
         shelf_life_hours: 24,
-        cost_per_unit: 0
+        cost_per_unit: 0,
+        vendor_name: VENDORS_LIST[0]?.name || ''
     })
     const [receiveQty, setReceiveQty] = useState(0)
 
@@ -72,7 +74,8 @@ export default function DailyItems() {
                 expected_daily_quantity: 0,
                 min_daily_quantity: 0,
                 shelf_life_hours: 24,
-                cost_per_unit: 0
+                cost_per_unit: 0,
+                vendor_name: VENDORS_LIST[0]?.name || ''
             })
             loadData()
         } catch (error) {
@@ -228,6 +231,20 @@ export default function DailyItems() {
                                     placeholder="e.g., Milk 1L"
                                     required
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Vendor Name</label>
+                                <select
+                                    value={formData.vendor_name}
+                                    onChange={e => setFormData({ ...formData, vendor_name: e.target.value })}
+                                >
+                                    {VENDORS_LIST.map(vendor => (
+                                        <option key={vendor.id} value={vendor.name}>
+                                            {vendor.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-row">

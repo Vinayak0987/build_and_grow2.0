@@ -12,7 +12,10 @@ import {
     Milk,
     LogOut,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Zap,
+    MessageSquare,
+    Wand2
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../store/authStore'
@@ -20,13 +23,13 @@ import './Layout.css'
 
 const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/datasets', icon: Database, label: 'Datasets' },
-    { path: '/training', icon: Cpu, label: 'Training' },
-    { path: '/models', icon: Box, label: 'Models' },
+    { path: '/ml-pipeline', icon: Zap, label: 'ML Pipeline', highlight: true },
+    { path: '/data-chat', icon: MessageSquare, label: 'Chat with Data' },
+    { path: '/synthetic-data', icon: Wand2, label: 'Synthetic Data' },
     { path: '/predictions', icon: Sparkles, label: 'Predictions' },
     { path: '/reasoning', icon: Brain, label: 'AI Reasoning' },
     { path: '/inventory', icon: Package, label: 'AI Inventory' },
-    { path: '/forecast', icon: TrendingUp, label: 'Demand Forecast' },
+
     { path: '/sales', icon: ShoppingCart, label: 'Sales Input' },
     { path: '/daily-items', icon: Milk, label: 'Daily Items' },
 ]
