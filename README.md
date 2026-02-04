@@ -1,717 +1,291 @@
-# InventraAI
+# InventraAI – AI-Powered Inventory Management
 
-## Overview
+InventraAI is a full-stack inventory management system that uses AI to analyze datasets, generate stock/expiry/order recommendations, and streamline vendor ordering and daily operations. It includes a React frontend with Zustand state persistence and a Flask backend with modular API blueprints.
 
-**InventraAI** is a no-code machine learning platform designed to simplify the end-to-end ML workflow for **structured, time-series, and image data**. The platform enables users to upload datasets, automatically train predictive models, and generate insights and predictions **without writing any machine learning code**.
+## 🚀 Quick Start
 
-InventraAI follows a **rule-based AutoML approach**, where the system automatically performs data profiling, preprocessing, model selection, training, evaluation, and explainability. Instead of deploying models as external services, predictions are executed internally and displayed directly through an interactive user interface, keeping the system **simple, efficient, and easy to use**.
+### Prerequisites
+- Node.js 18+
+- Python 3.11+
+- PostgreSQL (optional; defaults to SQLite)
 
-The platform is built entirely on **open-source technologies**, including **Streamlit** for the no-code interface, **Pandas and scikit-learn** for data processing and model training, and **MinIO** for scalable object storage of datasets, models, and artifacts. InventraAI is optimized for **educational use, rapid prototyping, and small-to-medium scale analytics**, while being architecturally ready to scale to distributed systems in future iterations.
-
----
-
-## Key Highlights
-
-* 🚀 **No-code, user-friendly ML workflow**
-* 📊 **Supports tabular (CSV/Excel), time-series, and image datasets**
-* ⚡ **8 AI Agents** for comprehensive automation
-* ⚙️ **Automated data profiling, preprocessing, and model training**
-* 📈 **Built-in model evaluation and explainability**
-* 🔮 **7-Day Demand Forecasting** with confidence bounds
-* 🤖 **AI-Powered Recommendations** for inventory decisions
-* 🧩 **Open-source, lightweight, and scalable-by-design**
-
----
-
-## ✨ New Features
-
-### 📊 Model Dashboard
-A comprehensive analytics dashboard for every trained model:
-- **Overview Tab**: Model summary, performance metrics, and quick stats
-- **Data Explorer Tab**: Interactive data visualization with filters
-- **Forecast Tab**: 7-day demand forecasting with AI recommendations
-- **Analytics Tab**: Advanced charts and insights
-- **Explainability Tab**: SHAP values and feature importance
-- **Export Tab**: Download models and predictions
-
-### 🔮 Forecast Tab Features
-The Forecast tab provides comprehensive demand forecasting capabilities:
-
-| Feature | Description |
-|---------|-------------|
-| **Total Forecast Chart** | Daily aggregated demand visualization |
-| **Product Comparison Chart** | Multi-product line/bar/area charts with product selection |
-| **Individual Product Forecast** | Single product view with min/max confidence bounds |
-| **7-Day Forecast Table** | Detailed predictions with confidence ranges per product |
-| **AI Recommendations** | LLM-powered insights and restock suggestions |
-
-### 🤖 AI-Powered Recommendations
-Click "Get AI Recommendations" to receive:
-- **Demand Insights**: Highest/lowest demand products identified
-- **Peak Day Analysis**: Busiest days highlighted for staffing
-- **Restock Suggestions**: Ranked order quantities with reasoning
-- **Weekly Trends**: Pattern analysis and actionable advice
-
----
-
-# 🏗️ System Architecture (React + Flask + Streamlit + MinIO)
-
-## High-Level Architecture
-
-```
-┌────────────────────────────────────────────┐
-│              User Browser                  │
-└───────────────┬───────────────┬────────────┘
-                │               │
-                │               │
-                ▼               ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│     React Frontend     │  │    Streamlit Frontend  │
-│   (Main Application)   │  │   (Prediction & ML UI) │
-│                        │  │                        │
-│ • Login / Dashboard    │  │ • Training progress    │
-│ • Dataset management   │  │ • Predictions          │
-│ • Job history          │  │ • Charts & insights    │
-└───────────────┬────────┘  └───────────────┬────────┘
-                │ REST API                  │ REST / Python
-                ▼                           ▼
-┌────────────────────────────────────────────┐
-│              Flask Backend                 │
-│          (Core Orchestrator API)           │
-│                                            │
-│ • Auth & user management                   │
-│ • Dataset registration                    │
-│ • AutoML workflow control                 │
-│ • Prediction orchestration                │
-└───────────────┬───────────────┬────────────┘
-                │               │
-                │               │
-                ▼               ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│      PostgreSQL        │  │        MinIO            │
-│   (Metadata Store)    │  │  (Object Storage)       │
-│                        │  │                        │
-│ • Users                │  │ • Raw datasets         │
-│ • Experiments          │  │ • Processed data       │
-│ • Job status           │  │ • Configs              │
-│ • Configs              │  │ • Pipelines            │
-└────────────────────────┘  │ • Metrics & artifacts  │
-                              └────────────────────────┘
-
-
-```
-
-
-# 🔄 Flow Summary
-
-```
-React UI
-   ↓
-Flask API
-   ↓
-MinIO (store data)
-   ↓
-Pandas AutoML
-   ↓
-Model + Artifacts → MinIO
-   ↓
-Streamlit UI
-   ↓
-Predictions in Browser
-```
-
----
-
-# 🚀 Getting Started
-
-## Prerequisites
-
-- **Python 3.10+**
-- **Node.js 18+**
-- **Docker & Docker Compose** (for database and storage)
-- **Git**
-
----
-
-## 📦 Installation
-
-### 1. Clone the Repository
-
+### Install & Run
 ```bash
-git clone https://github.com/bharat3214/InventraAI.git
-cd InventraAI
-```
-
-### 2. Set Up Environment Variables
-
-```bash
-cp .env.example .env
-# Edit .env with your configuration if needed
-```
-
----
-
-## 🐳 Running with Docker (Recommended)
-
-### Start All Services
-
-```bash
-# Start all infrastructure + services
-docker-compose up --build
-
-# Or start in background
-docker-compose up -d --build
-```
-
-**Access Points:**
-- 🌐 **Frontend (React)**: http://localhost:3000
-- 🔌 **Backend API**: http://localhost:5000
-- 📊 **Streamlit App**: http://localhost:8501
-- 💾 **MinIO Console**: http://localhost:9001 (admin: minioadmin/minioadmin)
-
-### Stop Services
-
-```bash
-docker-compose down
-```
-
----
-
-## 🛠️ Running Locally (Development)
-
-### Step 1: Start Infrastructure Only
-
-```bash
-docker-compose up -d postgres redis minio
-```
-
-### Step 2: Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Initialize database
-python migrations.py init
-
-# (Optional) Seed with demo data
-python migrations.py seed
-
-# Run backend server
-python run.py
-```
-
-Backend runs at: http://localhost:5000
-
-### Step 3: Frontend Setup
-
-```bash
+# Frontend
 cd frontend
-
-# Install dependencies
 npm install
+npm start
 
-# Run development server
-npm run dev
-```
-
-Frontend runs at: http://localhost:3000
-
-### Step 4: Streamlit App (Optional)
-
-```bash
-cd streamlit_app
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run Streamlit
-streamlit run app.py
-```
-
-Streamlit runs at: http://localhost:8501
-
-### Step 5: Celery Worker (For Background Training)
-
-```bash
+# Backend
 cd backend
-
-# In a new terminal
-celery -A app.celery_app worker --loglevel=info
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+flask run
 ```
 
----
-
-## 🧪 Running Tests
-
-```bash
-# Install test dependencies
-pip install pytest
-
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=.
-```
-
----
+Open http://localhost:3000. The app will guide you through:
+1) Upload a dataset (Datasets page)
+2) Train a model (ML Pipeline page)
+3) Run AI analysis (Reasoning page)
+4) Create orders (Inventory page)
+5) Log receipts (Daily Items page)
+6) Record sales (Sales Input page)
 
 ## 📁 Project Structure
 
 ```
-InventraAI/
-├── backend/                 # Flask API Server
-│   ├── app/
-│   │   ├── models/         # Database models
-│   │   ├── routes/         # API endpoints
-│   │   ├── services/       # Business logic
-│   │   └── tasks/          # Celery background tasks
-│   ├── migrations.py       # Database management
-│   └── run.py              # Entry point
-│
-├── frontend/               # React Dashboard
-│   ├── src/
-│   │   ├── pages/          # Page components
-│   │   ├── components/     # Reusable UI components
-│   │   ├── services/       # API client
-│   │   └── store/          # State management
-│   └── package.json
-│
-├── ml_engine/              # AutoML Core
-│   ├── automl/
-│   │   ├── tabular/        # Classification, Regression, Clustering
-│   │   ├── timeseries/     # ARIMA, Prophet, LSTM
-│   │   └── vision/         # Image Classification
-│   ├── preprocessing/      # Data preprocessors
-│   ├── explainability/     # SHAP explanations
-│   └── packaging/          # Model packaging
-│
-├── streamlit_app/          # Prediction UI
-├── docker/                 # Dockerfiles
-├── tests/                  # Unit & Integration tests
-└── docker-compose.yml      # Full stack orchestration
+build_and_grow2.0/
+├─ frontend/
+│  ├─ src/
+│  │  ├─ pages/          # Feature pages: Reasoning, Inventory, DailyItems, SalesInput, MLPipeline, Dashboard
+│  │  ├─ store/          # Zustand stores: authStore, inventoryStore
+│  │  ├─ constants/      # Shared constants (e.g., VENDORS_LIST)
+│  │  └─ services/       # API client modules
+├─ backend/
+│  ├─ api/               # Flask blueprints: reasoning_bp, inventory_bp, daily_items_bp, sales_bp, models_bp, datasets_bp
+│  ├─ models/            # SQLAlchemy models
+│  └─ services/          # Business logic and ML pipeline
+└─ README.md
 ```
 
----
+## 🧠 Core Features
 
-## 🔑 Demo Credentials
+| Feature | Route | What It Does |
+|---------|-------|--------------|
+| AI Reasoning | `/reasoning` | Runs stock/expiry/order/trends analysis on a selected dataset and model; writes results to `inventoryStore` via `setAllAnalysis()` [1](#1-0)  |
+| Inventory Management | `/inventory` | Reads AI order suggestions, lets users select vendors, send quotation requests, and place purchase orders [2](#1-1)  |
+| Daily Items (Perishables) | `/daily-items` | Configure daily items, log receipts, compare expected vs received quantities |
+| Sales Input & Tracking | `/sales-input` | Manual entry, CSV upload, daily summaries, product analytics [3](#1-2)  |
+| ML Pipeline | `/ml-pipeline` | Dataset upload, preprocessing, AutoML training, model monitoring |
+| Dashboard | `/dashboard` | System overview with quick metrics and navigation shortcuts |
 
-After running `python migrations.py seed`:
+## 🔄 Typical Workflow
 
+```mermaid
+graph TB
+    Reasoning["Reasoning<br/>Run AI Analysis"] -->|orderSuggestions| Inventory["Inventory<br/>Select Vendors & Place Order"]
+    Inventory -->|purchaseOrder| DailyItems["Daily Items<br/>Log Receipts"]
+    DailyItems -->|inventory updates| SalesInput["Sales Input<br/>Log Sales"]
+    SalesInput -->|historical data| Reasoning
 ```
-Email: demo@inventra.ai
-Password: demo123
-```
 
----
+1) **Upload data** (Datasets) → 2) **Train model** (ML Pipeline) → 3) **Run AI analysis** (Reasoning) → 4) **Create orders** (Inventory) → 5) **Log receipts** (Daily Items) → 6) **Record sales** (Sales Input) → repeat.
 
-## 🛡️ Environment Variables
+## 🗄️ State Management
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `FLASK_ENV` | Environment mode | development |
-| `DATABASE_URL` | PostgreSQL connection | postgresql://postgres:postgres@localhost:5432/inventra_ai |
-| `REDIS_URL` | Redis connection | redis://localhost:6379/0 |
-| `MINIO_ENDPOINT` | MinIO server | localhost:9000 |
-| `MINIO_ACCESS_KEY` | MinIO access key | minioadmin |
-| `MINIO_SECRET_KEY` | MinIO secret key | minioadmin |
-| `JWT_SECRET_KEY` | JWT signing key | your-jwt-secret-key |
+- Central Zustand store `inventoryStore` persists to `localStorage` under key `inferx-inventory` [4](#1-3) .
+- Shared analysis state (`orderSuggestions`, `stockAnalysis`, `expiryAnalysis`, `trendsAnalysis`, `fullReport`) is written by Reasoning and read by other pages.
+- Page-specific state (`reasoningState`, `inventoryState`, `salesState`) is isolated per feature.
 
----
+## 🛠️ Tech Stack
 
-## 📝 API Documentation
+- **Frontend**: React 18, React Router, Zustand, Axios
+- **Backend**: Flask, Flask-SQLAlchemy, Flask-JWT-Extended, Blueprints
+- **Database**: PostgreSQL (production) / SQLite (dev)
+- **ML/AI**: Scikit-learn, Pandas, AutoML helpers (backend)
 
-### Authentication
-- `POST /api/auth/register` - Create new account
-- `POST /api/auth/login` - Login & get token
-- `GET /api/auth/me` - Get current user
+## 📚 Key Pages & APIs
 
-### Datasets
-- `GET /api/datasets` - List all datasets
-- `POST /api/datasets/upload` - Upload dataset
-- `GET /api/datasets/:id` - Get dataset details
+| Page | API Blueprint(s) | Key Endpoints |
+|------|------------------|---------------|
+| Reasoning | `reasoning_bp`, `models_bp`, `datasets_bp` | `POST /api/reasoning/{stock-analysis,expiry-analysis,order-suggestions,trends,full-report}/:id` |
+| Inventory | `inventory_bp` | `GET /api/inventory/suggest-order`, `POST /api/inventory/orders` |
+| Daily Items | `daily_items_bp` | `GET /api/daily-items/items`, `POST /api/daily-items/log-receipt` |
+| Sales Input | `sales_bp`, `datasets_bp` | `POST /api/sales/log`, `POST /api/sales/upload-csv` |
 
-### Training
-- `POST /api/training/start` - Start training job
-- `GET /api/training/:id/status` - Get job status
+## 🧩 Shared Data
 
-### Models
-- `GET /api/models` - List trained models
-- `GET /api/models/:id/schema` - Get prediction form schema
-
-### Predictions
-- `POST /api/predict/:modelId` - Make prediction
-- `POST /api/predict/:modelId/explain` - Get explanation
-
----
+- `VENDORS_LIST` constant is imported by both Inventory and Daily Items for consistent vendor data [5](#1-4) .
+- Demo data fallbacks are defined in each page for development/error handling.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
+1) Fork the repo.
+2) Create a feature branch (`git checkout -b feature/amazing-feature`).
+3) Commit changes (`git commit -m 'Add amazing feature'`).
+4) Push to the branch (`git push origin feature/amazing-feature`).
+5) Open a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+MIT License — see LICENSE file for details.
 
----
+## Notes
+- The README synthesizes information from the Core Features and Inventory Management wiki pages and key source files. For deeper details, refer to the inline documentation in each component and blueprint.
+- If you are setting up the project for the first time, ensure the backend Flask app is running before starting the React frontend to avoid CORS or API errors.
 
-## 🙋 Support
+Wiki pages you might want to explore:
+- [Core Features (Vinayak0987/build_and_grow2.0)](/wiki/Vinayak0987/build_and_grow2.0#2.4)
+- [Inventory Management (Vinayak0987/build_and_grow2.0)](/wiki/Vinayak0987/build_and_grow2.0#2.4.2)
 
-For issues or questions, please open an issue on GitHub.
+Wiki pages you might want to explore:
+- [Core Features (Vinayak0987/build_and_grow2.0)](/wiki/Vinayak0987/build_and_grow2.0#2.4)
+- [AI Reasoning Engine (Vinayak0987/build_and_grow2.0)](/wiki/Vinayak0987/build_and_grow2.0#2.4.1)
 
-#   H a c k a t h o n - A H  
- 
-# InventraAI
+### Citations
 
-## Overview
-
-**InventraAI** is a no-code machine learning platform designed to simplify the end-to-end ML workflow for **structured, time-series, and image data**. The platform enables users to upload datasets, automatically train predictive models, and generate insights and predictions **without writing any machine learning code**.
-
-InventraAI follows a **rule-based AutoML approach**, where the system automatically performs data profiling, preprocessing, model selection, training, evaluation, and explainability. Instead of deploying models as external services, predictions are executed internally and displayed directly through an interactive user interface, keeping the system **simple, efficient, and easy to use**.
-
-The platform is built entirely on **open-source technologies**, including **Streamlit** for the no-code interface, **Pandas and scikit-learn** for data processing and model training, and **MinIO** for scalable object storage of datasets, models, and artifacts. InventraAI is optimized for **educational use, rapid prototyping, and small-to-medium scale analytics**, while being architecturally ready to scale to distributed systems in future iterations.
-
----
-
-## Key Highlights
-
-* 🚀 **No-code, user-friendly ML workflow**
-* 📊 **Supports tabular (CSV/Excel), time-series, and image datasets**
-* ⚡ **8 AI Agents** for comprehensive automation
-* ⚙️ **Automated data profiling, preprocessing, and model training**
-* 📈 **Built-in model evaluation and explainability**
-* 🧩 **Open-source, lightweight, and scalable-by-design**
-
----
-
-# 🏗️ System Architecture (React + Flask + Streamlit + MinIO)
-
-## High-Level Architecture
-
-```
-┌────────────────────────────────────────────┐
-│              User Browser                  │
-└───────────────┬───────────────┬────────────┘
-                │               │
-                │               │
-                ▼               ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│     React Frontend     │  │    Streamlit Frontend  │
-│   (Main Application)   │  │   (Prediction & ML UI) │
-│                        │  │                        │
-│ • Login / Dashboard    │  │ • Training progress    │
-│ • Dataset management   │  │ • Predictions          │
-│ • Job history          │  │ • Charts & insights    │
-└───────────────┬────────┘  └───────────────┬────────┘
-                │ REST API                  │ REST / Python
-                ▼                           ▼
-┌────────────────────────────────────────────┐
-│              Flask Backend                 │
-│          (Core Orchestrator API)           │
-│                                            │
-│ • Auth & user management                   │
-│ • Dataset registration                    │
-│ • AutoML workflow control                 │
-│ • Prediction orchestration                │
-└───────────────┬───────────────┬────────────┘
-                │               │
-                │               │
-                ▼               ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│      PostgreSQL        │  │        MinIO            │
-│   (Metadata Store)    │  │  (Object Storage)       │
-│                        │  │                        │
-│ • Users                │  │ • Raw datasets         │
-│ • Experiments          │  │ • Processed data       │
-│ • Job status           │  │ • Configs              │
-│ • Configs              │  │ • Pipelines            │
-└────────────────────────┘  │ • Metrics & artifacts  │
-                              └────────────────────────┘
-
-
+**File:** frontend/src/pages/Reasoning.jsx (L5-16)
+```javascript
+export default function Reasoning() {
+    const { token } = useAuthStore()
+    const {
+        reasoningState,
+        setReasoningState,
+        setAllAnalysis,
+        stockAnalysis,
+        expiryAnalysis,
+        orderSuggestions,
+        trendsAnalysis,
+        fullReport
+    } = useInventoryStore()
 ```
 
+**File:** frontend/src/pages/Inventory.jsx (L222-309)
+```javascript
+    const hasActionItems = orderSuggestions?.suggested_items?.length > 0
+    const selectedVendorsList = vendors.filter(v => selectedVendors.includes(v.id))
 
-# 🔄 Flow Summary
+    return (
+        <div className="inventory-page">
+            <div className="inventory-header">
+                <div>
+                    <h1>🤖 AI Inventory Center</h1>
+                    <p>Order Generation Agent - Smart inventory replenishment</p>
+                    {lastUpdated && (
+                        <span className="last-updated">
+                            Last analyzed: {new Date(lastUpdated).toLocaleString()}
+                        </span>
+                    )}
+                </div>
+                <button
+                    className={`refresh-btn ${refreshing ? 'spinning' : ''}`}
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
+            </div>
 
-```
-React UI
-   ↓
-Flask API
-   ↓
-MinIO (store data)
-   ↓
-Pandas AutoML
-   ↓
-Model + Artifacts → MinIO
-   ↓
-Streamlit UI
-   ↓
-Predictions in Browser
-```
+            {/* Purchase Tracking Section - Shows when quotations are sent */}
+            {purchaseOrder && trackingStep && (
+                <div className="purchase-tracking-section">
+                    <div className="tracking-header">
+                        <div className="tracking-title">
+                            <span className="tracking-icon">📋</span>
+                            <div>
+                                <h2>Purchase Order Tracking</h2>
+                                <p>Order ID: {purchaseOrder.orderId}</p>
+                            </div>
+                        </div>
+                        <div className="tracking-vendor-count">
+                            <span className="vendor-label">Vendors Contacted:</span>
+                            <span className="vendor-count">{purchaseOrder.quotationVendors?.length || 0}</span>
+                        </div>
+                    </div>
 
----
+                    <div className="tracking-progress">
+                        {/* Step 1: Quotation Sent */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 0 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.QUOTATION_SENT ? 'current' : ''}`}>
+                            <div className="step-icon">📧</div>
+                            <div className="step-content">
+                                <span className="step-label">Quotation Request Sent</span>
+                                <span className="step-time">
+                                    {new Date(purchaseOrder.quotationSentAt).toLocaleString()}
+                                </span>
+                                <span className="step-detail">
+                                    Sent to {purchaseOrder.quotationVendors?.length} vendors
+                                </span>
+                            </div>
+                            <div className={`step-connector ${getTrackingStepIndex() >= 1 ? 'active' : ''}`}></div>
+                        </div>
 
-# 🚀 Getting Started
+                        {/* Step 2: Select Vendor */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 1 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.SELECT_VENDOR ? 'current' : ''}`}>
+                            <div className="step-icon">🔍</div>
+                            <div className="step-content">
+                                <span className="step-label">Select Vendor</span>
+                                {trackingStep === TRACKING_STEPS.SELECT_VENDOR && (
+                                    <div className="vendor-dropdown-container">
+                                        <select
+                                            className="vendor-dropdown"
+                                            value={finalVendor?.id || ''}
+                                            onChange={(e) => handleFinalVendorSelect(e.target.value)}
+                                        >
+                                            <option value="">-- Select Best Vendor --</option>
+                                            {purchaseOrder.quotationVendors?.map(vendor => (
+                                                <option key={vendor.id} value={vendor.id}>
+                                                    {vendor.name} ({vendor.category})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="dropdown-hint">Choose the vendor with the best quotation</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className={`step-connector ${getTrackingStepIndex() >= 2 ? 'active' : ''}`}></div>
+                        </div>
 
-## Prerequisites
-
-- **Python 3.10+**
-- **Node.js 18+**
-- **Docker & Docker Compose** (for database and storage)
-- **Git**
-
----
-
-## 📦 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/bharat3214/InventraAI.git
-cd InventraAI
-```
-
-### 2. Set Up Environment Variables
-
-```bash
-cp .env.example .env
-# Edit .env with your configuration if needed
-```
-
----
-
-## 🐳 Running with Docker (Recommended)
-
-### Start All Services
-
-```bash
-# Start all infrastructure + services
-docker-compose up --build
-
-# Or start in background
-docker-compose up -d --build
-```
-
-**Access Points:**
-- 🌐 **Frontend (React)**: http://localhost:3000
-- 🔌 **Backend API**: http://localhost:5000
-- 📊 **Streamlit App**: http://localhost:8501
-- 💾 **MinIO Console**: http://localhost:9001 (admin: minioadmin/minioadmin)
-
-### Stop Services
-
-```bash
-docker-compose down
-```
-
----
-
-## 🛠️ Running Locally (Development)
-
-### Step 1: Start Infrastructure Only
-
-```bash
-docker-compose up -d postgres redis minio
-```
-
-### Step 2: Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Initialize database
-python migrations.py init
-
-# (Optional) Seed with demo data
-python migrations.py seed
-
-# Run backend server
-python run.py
+                        {/* Step 3: Vendor Selected */}
+                        <div className={`tracking-step ${getTrackingStepIndex() >= 2 ? 'active' : ''} ${trackingStep === TRACKING_STEPS.VENDOR_SELECTED ? 'current' : ''}`}>
 ```
 
-Backend runs at: http://localhost:5000
+**File:** frontend/src/pages/SalesInput.jsx (L226-259)
+```javascript
+    // Upload CSV (keep as fallback)
+    const handleUploadCSV = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
 
-### Step 3: Frontend Setup
+        const uploadData = new FormData()
+        uploadData.append('file', file)
 
-```bash
-cd frontend
+        try {
+            const result = await salesApi.uploadCsv(uploadData)
+            const data = result.data
+            showToast(`Successfully imported ${data.imported} sales records!`)
 
-# Install dependencies
-npm install
+            if (data.date_range?.max) {
+                const maxDate = data.date_range.max
+                setSelectedDate(maxDate)
+                await loadDailySales(maxDate)
+                showToast(`Showing data for ${maxDate}`)
+            } else {
+                await loadDailySales()
+            }
 
-# Run development server
-npm run dev
-```
+            await loadHistory()
+        } catch (err) {
+            console.error('Upload failed:', err)
+            showToast('Upload failed: ' + (err.response?.data?.error || err.message), 'error')
+        }
 
-Frontend runs at: http://localhost:3000
-
-### Step 4: Streamlit App (Optional)
-
-```bash
-cd streamlit_app
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run Streamlit
-streamlit run app.py
-```
-
-Streamlit runs at: http://localhost:8501
-
-### Step 5: Celery Worker (For Background Training)
-
-```bash
-cd backend
-
-# In a new terminal
-celery -A app.celery_app worker --loglevel=info
-```
-
----
-
-## 🧪 Running Tests
-
-```bash
-# Install test dependencies
-pip install pytest
-
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=.
-```
-
----
-
-## 📁 Project Structure
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
+    }
 
 ```
-InventraAI/
-├── backend/                 # Flask API Server
-│   ├── app/
-│   │   ├── models/         # Database models
-│   │   ├── routes/         # API endpoints
-│   │   ├── services/       # Business logic
-│   │   └── tasks/          # Celery background tasks
-│   ├── migrations.py       # Database management
-│   └── run.py              # Entry point
-│
-├── frontend/               # React Dashboard
-│   ├── src/
-│   │   ├── pages/          # Page components
-│   │   ├── components/     # Reusable UI components
-│   │   ├── services/       # API client
-│   │   └── store/          # State management
-│   └── package.json
-│
-├── ml_engine/              # AutoML Core
-│   ├── automl/
-│   │   ├── tabular/        # Classification, Regression, Clustering
-│   │   ├── timeseries/     # ARIMA, Prophet, LSTM
-│   │   └── vision/         # Image Classification
-│   ├── preprocessing/      # Data preprocessors
-│   ├── explainability/     # SHAP explanations
-│   └── packaging/          # Model packaging
-│
-├── streamlit_app/          # Prediction UI
-├── docker/                 # Dockerfiles
-├── tests/                  # Unit & Integration tests
-└── docker-compose.yml      # Full stack orchestration
+
+**File:** frontend/src/store/inventoryStore.js (L108-122)
+```javascript
+        {
+            name: 'inferx-inventory',
+            partialize: (state) => ({
+                orderSuggestions: state.orderSuggestions,
+                stockAnalysis: state.stockAnalysis,
+                expiryAnalysis: state.expiryAnalysis,
+                trendsAnalysis: state.trendsAnalysis,
+                fullReport: state.fullReport,
+                lastUpdated: state.lastUpdated,
+                reasoningState: state.reasoningState,
+                inventoryState: state.inventoryState,
+                salesState: state.salesState
+            })
+        }
+    )
 ```
-
----
-
-## 🔑 Demo Credentials
-
-After running `python migrations.py seed`:
-
-```
-Email: demo@inventra.ai
-Password: demo123
-```
-
----
-
-## 🛡️ Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `FLASK_ENV` | Environment mode | development |
-| `DATABASE_URL` | PostgreSQL connection | postgresql://postgres:postgres@localhost:5432/inventra_ai |
-| `REDIS_URL` | Redis connection | redis://localhost:6379/0 |
-| `MINIO_ENDPOINT` | MinIO server | localhost:9000 |
-| `MINIO_ACCESS_KEY` | MinIO access key | minioadmin |
-| `MINIO_SECRET_KEY` | MinIO secret key | minioadmin |
-| `JWT_SECRET_KEY` | JWT signing key | your-jwt-secret-key |
-
----
-
-## 📝 API Documentation
-
-### Authentication
-- `POST /api/auth/register` - Create new account
-- `POST /api/auth/login` - Login & get token
-- `GET /api/auth/me` - Get current user
-
-### Datasets
-- `GET /api/datasets` - List all datasets
-- `POST /api/datasets/upload` - Upload dataset
-- `GET /api/datasets/:id` - Get dataset details
-
-### Training
-- `POST /api/training/start` - Start training job
-- `GET /api/training/:id/status` - Get job status
-
-### Models
-- `GET /api/models` - List trained models
-- `GET /api/models/:id/schema` - Get prediction form schema
-
-### Predictions
-- `POST /api/predict/:modelId` - Make prediction
-- `POST /api/predict/:modelId/explain` - Get explanation
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 🙋 Support
-
-For issues or questions, please open an issue on GitHub.
-
